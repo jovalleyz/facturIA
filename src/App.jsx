@@ -60,39 +60,33 @@ import {
   CartesianGrid
 } from 'recharts';
 
-// --- CONFIGURACIÓN ---
-
-/* NOTA PARA GITHUB / PRODUCCIÓN:
-   Para mayor seguridad en tu repositorio, usa las variables de entorno.
-   Descomenta las líneas con 'import.meta.env' y comenta/borra las credenciales directas.
+// --- CONFIGURACIÓN HÍBRIDA (SEGURA + RESPALDO) ---
+/* Esta configuración intenta leer las variables de entorno primero (ideal para producción/seguridad).
+   Si no las encuentra (como en esta vista previa o si fallan en GitHub), usa las credenciales directas.
 */
 
+const getEnv = (key, fallback) => {
+  try {
+    // Intenta leer de Vite (entorno local/producción)
+    return import.meta.env[key] || fallback;
+  } catch (e) {
+    // Si falla (entorno de vista previa), usa el fallback
+    return fallback;
+  }
+};
+
 const firebaseConfig = {
-  // apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  apiKey: "AIzaSyDfpEQzEWv4wzErgjMeAtbmJPg_aknrrNM",
-  
-  // authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  authDomain: "app-facturas-8ae2f.firebaseapp.com",
-  
-  // projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  projectId: "app-facturas-8ae2f",
-  
-  // storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  storageBucket: "app-facturas-8ae2f.firebasestorage.app",
-  
-  // messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  messagingSenderId: "859270147246",
-  
-  // appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  appId: "1:859270147246:web:68359827bd626743d8d13f",
-  
-  // measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
-  measurementId: "G-QGTYDCD072"
+  apiKey: getEnv("VITE_FIREBASE_API_KEY", "AIzaSyDfpEQzEWv4wzErgjMeAtbmJPg_aknrrNM"),
+  authDomain: getEnv("VITE_FIREBASE_AUTH_DOMAIN", "app-facturas-8ae2f.firebaseapp.com"),
+  projectId: getEnv("VITE_FIREBASE_PROJECT_ID", "app-facturas-8ae2f"),
+  storageBucket: getEnv("VITE_FIREBASE_STORAGE_BUCKET", "app-facturas-8ae2f.firebasestorage.app"),
+  messagingSenderId: getEnv("VITE_FIREBASE_MESSAGING_SENDER_ID", "859270147246"),
+  appId: getEnv("VITE_FIREBASE_APP_ID", "1:859270147246:web:68359827bd626743d8d13f"),
+  measurementId: getEnv("VITE_FIREBASE_MEASUREMENT_ID", "G-QGTYDCD072")
 };
 
 // API Key de Gemini
-// const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GEMINI_API_KEY = "AIzaSyB2YbcLjCRl48zVNp1u-8Rg4-jiNPGVP3g";
+const GEMINI_API_KEY = getEnv("VITE_GEMINI_API_KEY", "AIzaSyB2YbcLjCRl48zVNp1u-8Rg4-jiNPGVP3g");
 
 // Inicialización de Firebase
 const app = initializeApp(firebaseConfig);
@@ -100,11 +94,10 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Variables Globales
-const appId = "app-facturas-8ae2f"; // ID constante para rutas
+const appId = "app-facturas-8ae2f"; 
 
 // --- SERVICIOS ---
 
-// Servicio de Gemini para OCR
 const processImageWithGemini = async (base64Image) => {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
   
