@@ -1,0 +1,15 @@
+{
+  "short_name": "FacturIA",
+  "name": "FacturIA - Gestión Inteligente",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4E73DF",
+  "background_color": "#ffffff"
+}
