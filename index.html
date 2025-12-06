@@ -6,16 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#4E73DF" />
     <meta name="description" content="FacturIA - Gestión inteligente de facturas y gastos con IA para República Dominicana.">
-    
-    <!-- Enlace al Manifiesto PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    
-    <!-- Título de la App -->
     <title>FacturIA</title>
+    
+    <!-- Enlace al Manifiesto PWA para que sea instalable -->
+    <link rel="manifest" href="/manifest.json" />
   </head>
   <body class="bg-slate-50 dark:bg-slate-950">
+    <!-- Aquí es donde React "montará" toda la aplicación -->
     <div id="root"></div>
-    <!-- Script principal que carga React -->
+    
+    <!-- Este script llama al archivo main.jsx que está dentro de la carpeta src -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
