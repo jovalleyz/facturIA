@@ -1199,20 +1199,35 @@ export default function App() {
 
     const isManualEntry = !formData.id && !currentInvoice.file; // No ID y no archivo (imagen)
 
+    // Lógica para autocompletar nombre de negocio al perder foco en RNC
+    const handleRncBlur = () => {
+      if (formData.rnc) {
+        const foundInvoice = invoices.find(inv => inv.rnc === formData.rnc && inv.nombre_negocio);
+        if (foundInvoice) {
+          setFormData(prev => ({ ...prev, nombre_negocio: foundInvoice.nombre_negocio }));
+        }
+      }
+    };
+
     return (
       <div className="p-4 pb-24 animate-fade-in">
         <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.id ? 'Editar Factura' : (isManualEntry ? 'Registro Manual' : 'Validar Datos')}</h2>
         <Card className="border-t-4 border-t-green-500">
           <form className="space-y-4">
             <div className="space-y-4">
-              {/* Datalist para autocompletar */}
               <datalist id="business-names">
                 {uniqueBusinesses.map((name, index) => (
                   <option key={index} value={name} />
                 ))}
               </datalist>
 
-              <Input label="RNC" name="rnc" value={formData.rnc || ''} onChange={handleChange} />
+              <Input
+                label="RNC"
+                name="rnc"
+                value={formData.rnc || ''}
+                onChange={handleChange}
+                onBlur={handleRncBlur}
+              />
               <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
               <Input
                 label="Nombre Negocio"
