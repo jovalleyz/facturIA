@@ -145,7 +145,7 @@ const Button = ({ children, onClick, variant = 'primary', className = '', type =
   );
 };
 
-const Input = ({ label, type = "text", value, onChange, placeholder, name, readOnly = false }) => (
+const Input = ({ label, type = "text", value, onChange, placeholder, name, readOnly = false, ...props }) => (
   <div className="mb-4">
     <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
     <div className="relative">
@@ -157,6 +157,7 @@ const Input = ({ label, type = "text", value, onChange, placeholder, name, readO
         placeholder={placeholder}
         readOnly={readOnly}
         className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all ${readOnly ? 'bg-gray-100 text-gray-500' : 'bg-white'} ${type === 'date' ? 'appearance-none' : ''}`}
+        {...props}
       />
       {/* Icono de calendario eliminado para evitar duplicidad con el nativo del navegador */}
     </div>
@@ -1167,6 +1168,21 @@ export default function App() {
           <Upload size={28} className="text-gray-400 mb-2" />
           <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
         </label>
+
+        <div className="flex items-center justify-center gap-4">
+          <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O</span><span className="h-px bg-gray-300 w-12"></span>
+        </div>
+
+        <button
+          onClick={() => {
+            setCurrentInvoice({ data: { fecha: new Date().toISOString().split('T')[0] } });
+            setCurrentView('verify');
+          }}
+          className="w-full py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2"
+        >
+          <Keyboard size={24} />
+          Ingresar Manualmente
+        </button>
       </div>
       <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
       {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div>}
@@ -1176,15 +1192,35 @@ export default function App() {
   const VerifyView = () => {
     const [formData, setFormData] = useState(currentInvoice.data || {});
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    // Obtener nombres de negocios únicos para autocompletar
+    const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
+
+    const isManualEntry = !formData.id && !currentInvoice.file; // No ID y no archivo (imagen)
+
     return (
       <div className="p-4 pb-24 animate-fade-in">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.id ? 'Editar Factura' : 'Validar Datos'}</h2>
+        <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.id ? 'Editar Factura' : (isManualEntry ? 'Registro Manual' : 'Validar Datos')}</h2>
         <Card className="border-t-4 border-t-green-500">
           <form className="space-y-4">
             <div className="space-y-4">
+              {/* Datalist para autocompletar */}
+              <datalist id="business-names">
+                {uniqueBusinesses.map((name, index) => (
+                  <option key={index} value={name} />
+                ))}
+              </datalist>
+
               <Input label="RNC" name="rnc" value={formData.rnc || ''} onChange={handleChange} />
               <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
-              <Input label="Nombre Negocio" name="nombre_negocio" value={formData.nombre_negocio || ''} onChange={handleChange} />
+              <Input
+                label="Nombre Negocio"
+                name="nombre_negocio"
+                value={formData.nombre_negocio || ''}
+                onChange={handleChange}
+                list="business-names"
+                placeholder="Escribe o selecciona..."
+              />
               <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
             </div>
 
