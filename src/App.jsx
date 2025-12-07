@@ -249,7 +249,11 @@ const SettingsView = ({
   exportToCSV,
   handleInviteCollaborator,
   onSignOut,
-  onUpdateProfile
+  handleInviteCollaborator,
+  onSignOut,
+  onUpdateProfile,
+  installPrompt,
+  onInstall
 }) => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -365,6 +369,20 @@ const SettingsView = ({
         </div>
       )}
 
+      )}
+
+      {installPrompt && (
+        <button onClick={onInstall} className="w-full bg-blue-600 text-white p-4 rounded-xl flex items-center justify-between mb-4 shadow-lg hover:bg-blue-700 transition-colors group animate-pulse">
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg"><Download size={20} /></div>
+            <div className="text-left">
+              <p className="font-bold text-sm">Instalar Aplicación</p>
+              <p className="text-[10px] text-blue-100">Accede más rápido desde tu inicio</p>
+            </div>
+          </div>
+        </button>
+      )}
+
       <button onClick={exportToCSV} className="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between mb-4 shadow-sm hover:bg-gray-50 transition-colors group">
         <div className="flex items-center gap-3">
           <div className="bg-green-50 text-green-600 p-2 rounded-lg group-hover:scale-110 transition-transform"><Download size={20} /></div>
@@ -404,6 +422,25 @@ export default function App() {
   const [stats, setStats] = useState({ total: 0, count: 0, itbis: 0, byCategory: {} });
 
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [installPrompt, setInstallPrompt] = useState(null);
+
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault();
+      setInstallPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!installPrompt) return;
+    installPrompt.prompt();
+    const { outcome } = await installPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setInstallPrompt(null);
+    }
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
