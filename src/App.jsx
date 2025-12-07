@@ -733,7 +733,7 @@ export default function App() {
     try {
       const data = await fetchWithRetry();
       const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textResponse) throw new Error("La IA no pudo leer la imagen.");
+      if (!textResponse) throw new Error("La IA no devolvió resultados.");
 
       const cleanJson = textResponse.replace(/```json|```/g, '').trim();
       const parsedData = JSON.parse(cleanJson);
@@ -769,7 +769,8 @@ export default function App() {
       setCurrentView('verify');
     } catch (err) {
       console.error("Gemini Final Error:", err);
-      setError("No se pudo procesar la factura. Intenta nuevamente.");
+      // Mostrar el mensaje real del error para depuración
+      setError(`Error al procesar: ${err.message}`);
     } finally {
       // Solo quitamos el loading si NO encontramos un duplicado (porque el modal se encarga)
       if (!duplicateWarning) {
@@ -1140,27 +1141,11 @@ export default function App() {
     );
   };
 
-  const ScanView = () => (
-    <div className="h-full flex flex-col p-6 animate-fade-in">
-      {viewingContext.type === 'shared' && (
-        <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
-      )}
-      {error && (
-        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-100 animate-pulse">
-          <AlertTriangle size={16} className="inline mr-1" /> {error}
-        </div>
-      )}
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar Factura</h2>
-      <div className={`flex-1 flex flex-col gap-6 justify-center ${viewingContext.type === 'shared' ? 'opacity-50 pointer-events-none' : ''}`}>
-        <label className="flex flex-col items-center justify-center h-48 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 border-dashed rounded-2xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden group">
-          <input type="file" accept="image/*" capture="environment" onChange={handleFileUpload} className="hidden" />
-          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-            <div className="bg-white p-4 rounded-full shadow-md mb-2 group-hover:bg-[#4E73DF] group-hover:text-white transition-colors">
-              <Camera size={32} className="text-[#4E73DF] group-hover:text-white" />
-            </div>
-            <p className="font-bold text-gray-700">Usar Cámara</p>
-          </div>
-        </label>
+  <Camera size={32} className="text-[#4E73DF] group-hover:text-white" />
+            </div >
+    <p className="font-bold text-gray-700">Usar Cámara</p>
+          </div >
+        </label >
 
         <div className="flex items-center justify-center gap-4">
           <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
@@ -1171,10 +1156,10 @@ export default function App() {
           <Upload size={28} className="text-gray-400 mb-2" />
           <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
         </label>
-      </div>
-      <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
-      {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div>}
-    </div>
+      </div >
+    <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
+  { loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div> }
+    </div >
   );
 
   const VerifyView = () => {
