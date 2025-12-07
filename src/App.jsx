@@ -1086,6 +1086,17 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
+      <DuplicateModal
+        duplicateData={duplicateWarning}
+        onCancel={() => {
+          setDuplicateWarning(null);
+          setLoading(false);
+        }}
+        onViewExisting={(data) => {
+          setDuplicateWarning(null);
+          handleInvoiceClick(data);
+        }}
+      />
       <header className={`px-4 py-4 shadow-sm sticky top-0 z-30 flex items-center justify-between transition-colors ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
