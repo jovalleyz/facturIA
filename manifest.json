@@ -1,0 +1,28 @@
+{
+  "name": "FacturIA - Gestión Inteligente",
+  "short_name": "FacturIA",
+  "description": "Gestiona tus facturas de forma inteligente con IA.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F8F9FC",
+  "theme_color": "#4E73DF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
