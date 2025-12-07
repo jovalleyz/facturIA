@@ -1267,7 +1267,7 @@ export default function App() {
 
       <main className="flex-1 overflow-y-auto scrollbar-hide">
         {currentView === 'dashboard' && <DashboardView />}
-        {currentView === 'scan' && <ScannerView />}
+
         {currentView === 'history' && <HistoryView />}
         {currentView === 'stats' && <StatsView />}
         {currentView === 'scan' && <ScanView />}
