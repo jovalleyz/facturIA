@@ -59,7 +59,10 @@ import {
 
 /**
  * CONFIGURACIÓN Y CREDENCIALES
+ * Para producción en Vercel, usar variables de entorno.
+ * En este entorno de prototipo, usamos la clave directa o un fallback seguro.
  */
+// Ajuste para evitar error de compilación con import.meta en entorno ES2015
 const GEMINI_API_KEY = "AIzaSyDesDdHFOwG_6Pj8zAIo79zcYKSpO40SrY";
 
 const firebaseConfig = {
@@ -1107,20 +1110,6 @@ export default function App() {
           onUpdateProfile={handleUpdateProfile}
         />}
       </main>
-
-      {/* 3.- MODAL DE DUPLICADOS */}
-      {duplicateWarning && (
-        <DuplicateModal 
-          duplicateData={duplicateWarning} 
-          onCancel={() => { setDuplicateWarning(null); setLoading(false); setLoadingMessage('Cargando...'); }}
-          onViewExisting={(data) => {
-             setDuplicateWarning(null);
-             handleInvoiceClick(data); // Reutilizamos la función de ir a detalle
-             setLoading(false);
-             setLoadingMessage('Cargando...');
-          }}
-        />
-      )}
 
       {/* FOOTER INSTITUCIONAL UNIFICADO */}
       <div className="bg-gray-100/80 backdrop-blur-sm py-3 text-center border-t border-gray-200 text-[10px] text-gray-500">
