@@ -54,7 +54,8 @@ import {
   CreditCard,
   ChevronRight,
   AlertTriangle,
-  Eye
+  Eye,
+  Keyboard
 } from 'lucide-react';
 
 /**
