@@ -426,13 +426,36 @@ export default function App() {
     const handler = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
+      // Opcional: mostrar notificación o toast "App lista para instalar"
     };
-    window.addEventListener('beforeinstallprompt', handler);
+
+    // Detectar si ya es 'standalone' (ya instalada)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    // Detectar iOS
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (!isStandalone) {
+      window.addEventListener('beforeinstallprompt', handler);
+      // Si es iOS y no está instalada, podríamos mostrar un banner diferente o activar el botón de ajustes
+      if (isIOS) {
+        setInstallPrompt({ isIOS: true }); // Marcador especial para iOS
+      }
+    }
+
+    return () => window.removeEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = async () => {
     if (!installPrompt) return;
+
+    // Lógica especial para iOS
+    if (installPrompt.isIOS) {
+      alert("Para instalar en iOS: \n1. Toca el botón 'Compartir' (cuadrado con flecha) abajo.\n2. Busca y selecciona 'Agregar a Inicio' (+).");
+      return;
+    }
+
     installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === 'accepted') {
