@@ -249,8 +249,6 @@ const SettingsView = ({
   exportToCSV,
   handleInviteCollaborator,
   onSignOut,
-  handleInviteCollaborator,
-  onSignOut,
   onUpdateProfile,
   installPrompt,
   onInstall
@@ -369,7 +367,7 @@ const SettingsView = ({
         </div>
       )}
 
-      )}
+
 
       {installPrompt && (
         <button onClick={onInstall} className="w-full bg-blue-600 text-white p-4 rounded-xl flex items-center justify-between mb-4 shadow-lg hover:bg-blue-700 transition-colors group animate-pulse">
@@ -1156,6 +1154,8 @@ export default function App() {
           handleInviteCollaborator={handleInviteCollaborator}
           onSignOut={() => { signOut(auth); setCurrentView('login'); }}
           onUpdateProfile={handleUpdateProfile}
+          installPrompt={installPrompt}
+          onInstall={handleInstallClick}
         />}
       </main>
 
