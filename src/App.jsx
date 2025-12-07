@@ -421,12 +421,10 @@ export default function App() {
 
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [installPrompt, setInstallPrompt] = useState(null);
-
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
       setInstallPrompt(e);
-      // Opcional: mostrar notificación o toast "App lista para instalar"
     };
 
     // Detectar si ya es 'standalone' (ya instalada)
@@ -437,13 +435,12 @@ export default function App() {
 
     if (!isStandalone) {
       window.addEventListener('beforeinstallprompt', handler);
-      // Si es iOS y no está instalada, podríamos mostrar un banner diferente o activar el botón de ajustes
+      // Si es iOS, activamos el prompt manualmente para mostrar el banner
       if (isIOS) {
-        setInstallPrompt({ isIOS: true }); // Marcador especial para iOS
+        setInstallPrompt({ isIOS: true });
       }
     }
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
@@ -874,7 +871,7 @@ export default function App() {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Crear Cuenta</h2>
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onClick={handleRegister} className="space-y-4">
             <Input label="Nombre Completo" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Juan Pérez" />
             <Input label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -1189,6 +1186,7 @@ export default function App() {
 
       <main className="flex-1 overflow-y-auto scrollbar-hide">
         {currentView === 'dashboard' && <DashboardView />}
+        {currentView === 'scan' && <ScannerView />}
         {currentView === 'history' && <HistoryView />}
         {currentView === 'stats' && <StatsView />}
         {currentView === 'scan' && <ScanView />}
@@ -1207,15 +1205,23 @@ export default function App() {
         />}
       </main>
 
-      {/* FOOTER INSTITUCIONAL UNIFICADO */}
-      <div className="bg-gray-100/80 backdrop-blur-sm py-3 text-center border-t border-gray-200 text-[10px] text-gray-500">
-        <p className="mb-1">OVM Easy Apps. Todos los derechos reservados.</p>
-        <a href="https://wa.me/18295341802" target="_blank" rel="noreferrer" className="text-[#4E73DF] font-semibold hover:underline flex items-center justify-center gap-1">
-          <Users size={10} /> Soporte WhatsApp
-        </a>
-      </div>
+      {/* Floating Install Banner */}
+      {installPrompt && !localStorage.getItem('pwa_dismissed') && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
+            <div className="flex-1">
+              <p className="font-bold text-gray-900">Instalar FacturIA</p>
+              <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
+            </div>
+            <button onClick={() => { setInstallPrompt(null); localStorage.setItem('pwa_dismissed', 'true'); }} className="text-gray-400 p-2"><XIcon size={20} /></button>
+          </div>
+          <Button onClick={handleInstallClick} className="w-full shadow-lg bg-[#4E73DF]">Instalar Ahora</Button>
+        </div>
+      )}
 
-      <nav className="bg-white border-t border-gray-200 py-2 px-4 flex justify-between items-center z-40 pb-safe">
+      {/* Navigation Bar */}
+      <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
         <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
           <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
         </button>
