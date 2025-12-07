@@ -1141,175 +1141,181 @@ export default function App() {
     );
   };
 
-  <Camera size={32} className="text-[#4E73DF] group-hover:text-white" />
+  const ScanView = () => (
+    <div className="h-full flex flex-col p-6 animate-fade-in">
+      {viewingContext.type === 'shared' && (
+        <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
+      )}
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar Factura</h2>
+      <div className={`flex-1 flex flex-col gap-6 justify-center ${viewingContext.type === 'shared' ? 'opacity-50 pointer-events-none' : ''}`}>
+        <label className="flex flex-col items-center justify-center h-48 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 border-dashed rounded-2xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden group">
+          <input type="file" accept="image/*" capture="environment" onChange={handleFileUpload} className="hidden" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+            <div className="bg-white p-4 rounded-full shadow-md mb-2 group-hover:bg-[#4E73DF] group-hover:text-white transition-colors">
+
+              <div className="flex items-center justify-center gap-4">
+                <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
+              </div>
+
+              <label className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all">
+                <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
+                <Upload size={28} className="text-gray-400 mb-2" />
+                <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
+              </label>
             </div >
-    <p className="font-bold text-gray-700">Usar Cámara</p>
+            <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
+            {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div>}
           </div >
-        </label >
-
-        <div className="flex items-center justify-center gap-4">
-          <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
-        </div>
-
-        <label className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all">
-          <input type="file" accept="image/*" onChange={handleFileUpload} className="hidden" />
-          <Upload size={28} className="text-gray-400 mb-2" />
-          <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
-        </label>
-      </div >
-    <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
-  { loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div> }
-    </div >
-  );
+          );
 
   const VerifyView = () => {
-    const [formData, setFormData] = useState(currentInvoice.data || {});
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-    return (
-      <div className="p-4 pb-24 animate-fade-in">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.id ? 'Editar Factura' : 'Validar Datos'}</h2>
-        <Card className="border-t-4 border-t-green-500">
-          <form className="space-y-4">
-            <div className="space-y-4">
-              <Input label="RNC" name="rnc" value={formData.rnc || ''} onChange={handleChange} />
-              <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
-              <Input label="Nombre Negocio" name="nombre_negocio" value={formData.nombre_negocio || ''} onChange={handleChange} />
-              <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
-            </div>
-
-            <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
-              <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
-                  <input
-                    type="number"
-                    name="total"
-                    value={formData.total || ''}
-                    onChange={handleChange}
-                    className="w-full pl-8 pr-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xl font-bold text-gray-800 bg-white"
-                    placeholder="0.00"
-                  />
+    const [formData, setFormData] = useState(currentInvoice.data || { });
+    const handleChange = (e) => setFormData({...formData, [e.target.name]: e.target.value });
+          return (
+          <div className="p-4 pb-24 animate-fade-in">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">{formData.id ? 'Editar Factura' : 'Validar Datos'}</h2>
+            <Card className="border-t-4 border-t-green-500">
+              <form className="space-y-4">
+                <div className="space-y-4">
+                  <Input label="RNC" name="rnc" value={formData.rnc || ''} onChange={handleChange} />
+                  <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
+                  <Input label="Nombre Negocio" name="nombre_negocio" value={formData.nombre_negocio || ''} onChange={handleChange} />
+                  <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
                 </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS</label>
-                  <input type="number" name="itbis" value={formData.itbis || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
+                  <div className="mb-4">
+                    <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
+                    <div className="relative">
+                      <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
+                      <input
+                        type="number"
+                        name="total"
+                        value={formData.total || ''}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-4 py-3 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-xl font-bold text-gray-800 bg-white"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS</label>
+                      <input type="number" name="itbis" value={formData.itbis || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
+                      <input type="number" name="propina" value={formData.propina || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
-                  <input type="number" name="propina" value={formData.propina || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                  <select name="categoria" value={formData.categoria || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="">Seleccionar Categoría</option>
+                    <option value="Alimentación">Alimentación</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Otros">Otros</option>
+                  </select>
                 </div>
-              </div>
-            </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select name="categoria" value={formData.categoria || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="">Seleccionar Categoría</option>
-                <option value="Alimentación">Alimentación</option>
-                <option value="Transporte">Transporte</option>
-                <option value="Servicios">Servicios</option>
-                <option value="Salud">Salud</option>
-                <option value="Otros">Otros</option>
-              </select>
-            </div>
-
-            <div className="pt-4 flex gap-3">
-              {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
-              {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
-              <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
-                {formData.id ? 'Actualizar' : 'Guardar'}
-              </Button>
-            </div>
-          </form>
-        </Card>
-      </div>
-    );
+                <div className="pt-4 flex gap-3">
+                  {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
+                  {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
+                  <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
+                    {formData.id ? 'Actualizar' : 'Guardar'}
+                  </Button>
+                </div>
+              </form>
+            </Card>
+          </div>
+          );
   };
 
-  if (loading && currentView === 'login') return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
-  if (currentView === 'login') return <LoginView />;
-  if (currentView === 'register') return <RegisterView />;
-  if (currentView === 'welcome') return <WelcomeView />;
+          if (loading && currentView === 'login') return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
+          if (currentView === 'login') return <LoginView />;
+          if (currentView === 'register') return <RegisterView />;
+          if (currentView === 'welcome') return <WelcomeView />;
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
-      <DuplicateModal
-        duplicateData={duplicateWarning}
-        onCancel={() => {
-          setDuplicateWarning(null);
-          setLoading(false);
-        }}
-        onViewExisting={(data) => {
-          setDuplicateWarning(null);
-          handleInvoiceClick(data);
-        }}
-      />
-      <header className={`px-4 py-4 shadow-sm sticky top-0 z-30 flex items-center justify-between transition-colors ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
-          <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
-        </div>
-      </header>
+          return (
+          <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
+            <DuplicateModal
+              duplicateData={duplicateWarning}
+              onCancel={() => {
+                setDuplicateWarning(null);
+                setLoading(false);
+              }}
+              onViewExisting={(data) => {
+                setDuplicateWarning(null);
+                handleInvoiceClick(data);
+              }}
+            />
+            <header className={`px-4 py-4 shadow-sm sticky top-0 z-30 flex items-center justify-between transition-colors ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
+              <div className="flex items-center gap-2">
+                <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
+                <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
+              </div>
+            </header>
 
-      <main className="flex-1 overflow-y-auto scrollbar-hide">
-        {currentView === 'dashboard' && <DashboardView />}
+            <main className="flex-1 overflow-y-auto scrollbar-hide">
+              {currentView === 'dashboard' && <DashboardView />}
 
-        {currentView === 'history' && <HistoryView />}
-        {currentView === 'stats' && <StatsView />}
-        {currentView === 'scan' && <ScanView />}
-        {currentView === 'verify' && <VerifyView />}
-        {currentView === 'settings' && <SettingsView
-          viewingContext={viewingContext}
-          sharedAccounts={sharedAccounts}
-          handleSwitchAccount={handleSwitchAccount}
-          handleSwitchToPersonal={handleSwitchToPersonal}
-          exportToCSV={exportToCSV}
-          handleInviteCollaborator={handleInviteCollaborator}
-          onSignOut={() => { signOut(auth); setCurrentView('login'); }}
-          onUpdateProfile={handleUpdateProfile}
-          installPrompt={installPrompt}
-          onInstall={handleInstallClick}
-        />}
-      </main>
+              {currentView === 'history' && <HistoryView />}
+              {currentView === 'stats' && <StatsView />}
+              {currentView === 'scan' && <ScanView />}
+              {currentView === 'verify' && <VerifyView />}
+              {currentView === 'settings' && <SettingsView
+                viewingContext={viewingContext}
+                sharedAccounts={sharedAccounts}
+                handleSwitchAccount={handleSwitchAccount}
+                handleSwitchToPersonal={handleSwitchToPersonal}
+                exportToCSV={exportToCSV}
+                handleInviteCollaborator={handleInviteCollaborator}
+                onSignOut={() => { signOut(auth); setCurrentView('login'); }}
+                onUpdateProfile={handleUpdateProfile}
+                installPrompt={installPrompt}
+                onInstall={handleInstallClick}
+              />}
+            </main>
 
-      {/* Floating Install Banner */}
-      {installPrompt && !localStorage.getItem('pwa_dismissed') && (
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
-          <div className="flex items-center gap-3">
-            <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
-            <div className="flex-1">
-              <p className="font-bold text-gray-900">Instalar FacturIA</p>
-              <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
-            </div>
-            <button onClick={() => { setInstallPrompt(null); localStorage.setItem('pwa_dismissed', 'true'); }} className="text-gray-400 p-2"><XIcon size={20} /></button>
+            {/* Floating Install Banner */}
+            {installPrompt && !localStorage.getItem('pwa_dismissed') && (
+              <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
+                  <div className="flex-1">
+                    <p className="font-bold text-gray-900">Instalar FacturIA</p>
+                    <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
+                  </div>
+                  <button onClick={() => { setInstallPrompt(null); localStorage.setItem('pwa_dismissed', 'true'); }} className="text-gray-400 p-2"><XIcon size={20} /></button>
+                </div>
+                <Button onClick={handleInstallClick} className="w-full shadow-lg bg-[#4E73DF]">Instalar Ahora</Button>
+              </div>
+            )}
+
+            {/* Navigation Bar */}
+            <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
+              <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+                <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
+              </button>
+              <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+                <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
+              </button>
+              <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
+                <Camera size={24} />
+              </button>
+              <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+                <PieChart size={22} /><span className="text-[10px] font-bold mt-1">Stats</span>
+              </button>
+              <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+                <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
+                {newCollabNotification && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+              </button>
+            </nav>
           </div>
-          <Button onClick={handleInstallClick} className="w-full shadow-lg bg-[#4E73DF]">Instalar Ahora</Button>
-        </div>
-      )}
-
-      {/* Navigation Bar */}
-      <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
-        <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-          <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
-        </button>
-        <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-          <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
-        </button>
-        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
-          <Camera size={24} />
-        </button>
-        <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-          <PieChart size={22} /><span className="text-[10px] font-bold mt-1">Stats</span>
-        </button>
-        <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-          <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
-          {newCollabNotification && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
-        </button>
-      </nav>
-    </div>
-  );
+          );
 }
