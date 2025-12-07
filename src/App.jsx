@@ -239,6 +239,69 @@ const DuplicateModal = ({ duplicateData, onCancel, onViewExisting }) => {
   );
 };
 
+const InvoiceDetailModal = ({ invoice, onClose }) => {
+  if (!invoice) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-blue-50 p-6 text-center border-b border-blue-100 relative">
+          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
+            <XIcon size={24} />
+          </button>
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-[#4E73DF]">
+            <FileText size={32} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800 break-words">{invoice.nombre_negocio}</h3>
+          <p className="text-sm text-gray-500 mt-1">{invoice.fecha || 'Sin fecha'}</p>
+        </div>
+
+        <div className="p-6 space-y-4">
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm space-y-2">
+            <div className="flex justify-between">
+              <span className="text-gray-500">RNC:</span>
+              <span className="font-mono text-gray-700">{invoice.rnc || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">NCF:</span>
+              <span className="font-mono text-gray-700">{invoice.ncf || 'N/A'}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-gray-500">Categoría:</span>
+              <span className="text-gray-700">{invoice.categoria || 'Otros'}</span>
+            </div>
+          </div>
+
+          <div className="space-y-2 pt-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Subtotal (aprox):</span>
+              <span>{formatCurrency((parseFloat(invoice.total || 0) - parseFloat(invoice.itbis || 0) - parseFloat(invoice.propina || 0)))}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>ITBIS:</span>
+              <span>{formatCurrency(invoice.itbis || 0)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Propina:</span>
+              <span>{formatCurrency(invoice.propina || 0)}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-100">
+              <span>Total:</span>
+              <span>{formatCurrency(invoice.total)}</span>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <Button onClick={onClose} className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200">
+              Cerrar
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES EXTERNOS ---
 
 const SettingsView = ({
@@ -896,6 +959,7 @@ export default function App() {
 
   const HistoryView = () => {
     const [searchTerm, setSearchTerm] = useState('');
+    const [viewingInvoice, setViewingInvoice] = useState(null);
     const filteredInvoices = invoices.filter(inv => {
       const term = searchTerm.toLowerCase();
       return (
@@ -948,12 +1012,29 @@ export default function App() {
                 </div>
                 <div className="text-xs text-gray-400 flex justify-between border-t border-gray-50 pt-2 mt-1">
                   <span>NCF: {inv.ncf || 'N/A'}</span>
-                  <div className="flex items-center gap-1 text-[#4E73DF]">Editar <ChevronRight size={12} /></div>
+                  <div className="flex items-center gap-1 text-[#4E73DF] w-full justify-end mt-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setViewingInvoice(inv); }}
+                      className="p-1 hover:bg-blue-50 rounded-full transition-colors mr-2"
+                      title="Ver Detalles"
+                    >
+                      <Eye size={20} />
+                    </button>
+                    <div onClick={(e) => { e.stopPropagation(); handleInvoiceClick(inv); }} className="flex items-center gap-1 cursor-pointer hover:underline">
+                      Editar <ChevronRight size={16} />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))
           )}
         </div>
+        {viewingInvoice && (
+          <InvoiceDetailModal
+            invoice={viewingInvoice}
+            onClose={() => setViewingInvoice(null)}
+          />
+        )}
       </div>
     );
   };
