@@ -583,11 +583,27 @@ export default function App() {
 
   const exportToCSV = () => {
     if (invoices.length === 0) return;
-    const headers = ["Fecha", "Nombre Negocio", "RNC", "NCF", "Categoría", "Total", "ITBIS", "Propina"];
-    const rows = invoices.map(inv => [
-      inv.fecha || "", `"${inv.nombre_negocio || ""}"`, inv.rnc || "", inv.ncf || "", inv.categoria || "", inv.total || 0, inv.itbis || 0, inv.propina || 0
-    ]);
-    const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    const headers = ["Fecha", "Nombre Negocio", "RNC", "NCF", "Categoría", "Monto Neto", "ITBIS", "Propina", "Monto Total"];
+    const rows = invoices.map(inv => {
+      const total = parseFloat(inv.total || 0);
+      const itbis = parseFloat(inv.itbis || 0);
+      const propina = parseFloat(inv.propina || 0);
+      const subtotal = total - itbis - propina;
+
+      return [
+        inv.fecha || "",
+        `"${(inv.nombre_negocio || "").replace(/"/g, '""')}"`, // Escapar comillas dobles
+        inv.rnc || "",
+        inv.ncf || "",
+        inv.categoria || "",
+        subtotal.toFixed(2),
+        itbis.toFixed(2),
+        propina.toFixed(2),
+        total.toFixed(2)
+      ];
+    });
+
+    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -872,7 +888,16 @@ export default function App() {
 
     return (
       <div className="p-4 pb-24 space-y-4 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-900">Registro de Facturas</h2>
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-bold text-gray-900">Registro de Facturas</h2>
+          <button
+            onClick={exportToCSV}
+            className="p-2 bg-green-50 text-green-600 rounded-lg shadow-sm hover:bg-green-100 transition-colors"
+            title="Exportar a CSV"
+          >
+            <Download size={20} />
+          </button>
+        </div>
         <div className="relative shadow-sm">
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
           <input type="text" placeholder="Buscar por nombre, NCF, monto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#4E73DF] outline-none transition-all" />
