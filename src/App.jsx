@@ -1145,6 +1145,11 @@ export default function App() {
       {viewingContext.type === 'shared' && (
         <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
       )}
+      {error && (
+        <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm text-center border border-red-100 animate-pulse">
+          <AlertTriangle size={16} className="inline mr-1" /> {error}
+        </div>
+      )}
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar Factura</h2>
       <div className={`flex-1 flex flex-col gap-6 justify-center ${viewingContext.type === 'shared' ? 'opacity-50 pointer-events-none' : ''}`}>
         <label className="flex flex-col items-center justify-center h-48 bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 border-dashed rounded-2xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden group">
