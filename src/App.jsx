@@ -699,6 +699,58 @@ export default function App() {
     document.body.removeChild(link);
   };
 
+  // --- RESIZING LOGIC START ---
+  const resizeImage = (file, maxWidth = 1024) => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth) {
+            height *= maxWidth / width;
+            width = maxWidth;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          // Convert to Base64 (JPEG, 0.7 quality)
+          resolve(canvas.toDataURL('image/jpeg', 0.8).split(',')[1]);
+        };
+      };
+    });
+  };
+  // --- RESIZING LOGIC END ---
+
+  const handleFileUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      setLoading(true);
+      setLoadingMessage('Optimizing image...');
+
+      // Resize image before processing to save tokens/costs
+      const resizedBase64 = await resizeImage(file);
+
+      const fileUrl = URL.createObjectURL(file);
+      setCurrentInvoice(prev => ({ ...prev, file: fileUrl })); // Guardar URL local para vista previa
+
+      await processImageWithGemini(resizedBase64);
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setLoading(false);
+      setError("Error al procesar la imagen. Inténtalo de nuevo.");
+    }
+  };
+
   const processImageWithGemini = async (base64Image) => {
     setLoading(true);
     setError('');
@@ -709,7 +761,8 @@ export default function App() {
 
     const fetchWithRetry = async (retries = 3, delay = 1000) => {
       try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
+        // CHANGED: Use gemini-1.5-flash for cost efficiency (15x cheaper than Pro)
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
