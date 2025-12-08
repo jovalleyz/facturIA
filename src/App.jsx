@@ -752,7 +752,7 @@ export default function App() {
   const processImageWithBackend = async (base64Image) => {
     setLoading(true);
     setError('');
-    setLoadingMessage('Analizando con Cloud Vision...');
+    setLoadingMessage('Analizando tu factura...');
 
     try {
       const response = await fetch('/api/analyze', {
@@ -802,7 +802,7 @@ export default function App() {
       setCurrentView('verify');
     } catch (err) {
       console.error("Backend API Error:", err);
-      setError(`Error al procesar: ${err.message}`);
+      // setError(`Error al procesar: ${err.message}`);
     } finally {
       // Solo quitamos el loading si NO encontramos un duplicado (porque el modal se encarga)
       if (!duplicateWarning) {
