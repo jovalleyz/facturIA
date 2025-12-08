@@ -53,7 +53,8 @@ export default async function handler(req, res) {
         const textResponse = geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!textResponse) {
-            throw new Error('Gemini parsing failed');
+            console.error('Gemini Parsing Failed. Full Response:', JSON.stringify(geminiData, null, 2));
+            throw new Error(`Gemini parsing failed. Model: gemini-1.5-flash-latest. Status: ${geminiResponse.status}`);
         }
 
         const cleanJson = textResponse.replace(/```json|```/g, '').trim();

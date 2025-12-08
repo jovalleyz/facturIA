@@ -55,15 +55,13 @@ import {
   ChevronRight,
   AlertTriangle,
   Eye,
-  Keyboard
+  Keyboard,
+  AlertCircle
 } from 'lucide-react';
 
 /**
  * CONFIGURACIÓN Y CREDENCIALES
- * Para producción en Vercel, usar variables de entorno.
- * En este entorno de prototipo, usamos la clave directa o un fallback seguro.
  */
-// Ajuste para evitar error de compilación con import.meta en entorno ES2015
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
 const firebaseConfig = {
