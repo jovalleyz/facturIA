@@ -954,7 +954,7 @@ export default function App() {
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
           <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Crear Cuenta</h2>
-          <form onClick={handleRegister} className="space-y-4">
+          <form onSubmit={handleRegister} className="space-y-4">
             <Input label="Nombre Completo" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Juan Pérez" />
             <Input label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
