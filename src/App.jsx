@@ -835,20 +835,7 @@ export default function App() {
     }
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
 
-    setLoading(true);
-    setLoadingMessage('Procesando imagen...');
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64 = reader.result.split(',')[1];
-      processImageWithGemini(base64);
-    };
-    reader.readAsDataURL(file);
-  };
 
   const handleSaveInvoice = async (validatedData) => {
     setLoading(true);
