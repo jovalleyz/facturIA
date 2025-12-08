@@ -34,14 +34,14 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'No text found in image' });
         }
 
-        // 2. Parse with Gemini 1.5 Flash (Cheap & Fast)
-        // We reuse the VITE_GEMINI_API_KEY (safely used on server side here)
+        // 2. Parse with Gemini 2.0 Flash (Fastest & Newest)
         const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
+        const MODEL_ID = 'gemini-2.0-flash-exp';
         const prompt = `Analiza este texto extraído de una factura dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis (número), propina (número), categoria.
     Texto:
     ${fullText}`;
 
-        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -54,7 +54,7 @@ export default async function handler(req, res) {
 
         if (!textResponse) {
             console.error('Gemini Parsing Failed. Full Response:', JSON.stringify(geminiData, null, 2));
-            throw new Error(`Gemini parsing failed. Model: gemini-1.5-flash-latest. Status: ${geminiResponse.status}`);
+            throw new Error(`Gemini parsing failed. Model: ${MODEL_ID}. Status: ${geminiResponse.status} - ${geminiData.error?.message || 'Unknown error'}`);
         }
 
         const cleanJson = textResponse.replace(/```json|```/g, '').trim();
