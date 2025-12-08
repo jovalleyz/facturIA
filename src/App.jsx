@@ -743,7 +743,7 @@ export default function App() {
       const fileUrl = URL.createObjectURL(file);
       setCurrentInvoice(prev => ({ ...prev, file: fileUrl })); // Guardar URL local para vista previa
 
-      await processImageWithGemini(resizedBase64);
+      await processImageWithBackend(resizedBase64);
     } catch (error) {
       console.error("Error processing file:", error);
       setLoading(false);
@@ -751,47 +751,27 @@ export default function App() {
     }
   };
 
-  const processImageWithGemini = async (base64Image) => {
+  const processImageWithBackend = async (base64Image) => {
     setLoading(true);
     setError('');
-    setLoadingMessage('La IA está leyendo tu factura...');
-
-    // Prompt actualizado para pedir fecha en formato correcto YYYY-MM-DD
-    const prompt = `Analiza esta factura dominicana. JSON puro: rnc, ncf, fecha (YYYY-MM-DD o YYYY/MM/DD), nombre_negocio, total (número), itbis (número), propina (número), categoria.`;
-
-    const fetchWithRetry = async (retries = 3, delay = 1000) => {
-      try {
-        // CHANGED: Reverted to gemini-2.5-flash-preview-09-2025 per user request
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Image } }] }]
-          })
-        });
-
-        if (response.status === 503 && retries > 0) {
-          setLoadingMessage(`Servidores ocupados (${retries})...`);
-          await wait(delay);
-          return fetchWithRetry(retries - 1, delay * 2);
-        }
-
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.error?.message || response.statusText);
-        return data;
-      } catch (err) {
-        if (retries > 0) { await wait(delay); return fetchWithRetry(retries - 1, delay * 2); }
-        throw err;
-      }
-    };
+    setLoadingMessage('Analizando con Cloud Vision...');
 
     try {
-      const data = await fetchWithRetry();
-      const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!textResponse) throw new Error("La IA no devolvió resultados.");
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ image: base64Image }),
+      });
 
-      const cleanJson = textResponse.replace(/```json|```/g, '').trim();
-      const parsedData = JSON.parse(cleanJson);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Error en el servidor');
+      }
+
+      const parsedData = data;
 
       // Normalizar fecha si la IA devuelve DD/MM/AAAA por error
       if (parsedData.fecha) {
@@ -823,8 +803,7 @@ export default function App() {
       setCurrentInvoice({ image: base64Image, data: parsedData });
       setCurrentView('verify');
     } catch (err) {
-      console.error("Gemini Final Error:", err);
-      // Mostrar el mensaje real del error para depuración
+      console.error("Backend API Error:", err);
       setError(`Error al procesar: ${err.message}`);
     } finally {
       // Solo quitamos el loading si NO encontramos un duplicado (porque el modal se encarga)
