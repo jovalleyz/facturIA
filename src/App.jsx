@@ -56,7 +56,8 @@ import {
   AlertTriangle,
   Eye,
   Keyboard,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 
 /**
@@ -314,7 +315,9 @@ const SettingsView = ({
   onSignOut,
   onUpdateProfile,
   installPrompt,
-  onInstall
+  onInstall,
+  myCollaborators,
+  handleRevokeAccess
 }) => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -458,6 +461,25 @@ const SettingsView = ({
           <button onClick={() => { handleInviteCollaborator(inviteEmail); setInviteEmail(''); }} className="bg-blue-600 text-white rounded-lg px-4 py-2 text-xs font-medium hover:bg-blue-700 transition-colors">Invitar</button>
         </div>
         <p className="text-[10px] text-gray-400 mt-2">Podrá ver y descargar tus facturas, pero no editarlas.</p>
+
+        {myCollaborators && myCollaborators.length > 0 && (
+          <div className="mt-6 border-t pt-4">
+            <h4 className="font-bold text-gray-700 mb-3 text-xs uppercase tracking-wider">Accesos Concedidos</h4>
+            <div className="space-y-2">
+              {myCollaborators.map(collab => (
+                <div key={collab.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-100">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <div className="bg-blue-100 p-1.5 rounded-full text-blue-600"><User size={14} /></div>
+                    <span className="text-sm text-gray-700 truncate">{collab.collaboratorEmail}</span>
+                  </div>
+                  <button onClick={() => handleRevokeAccess(collab.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Revocar acceso">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="mt-8"><Button variant="danger" onClick={onSignOut} className="w-full"><LogOut size={18} className="mr-2" /> Cerrar Sesión</Button></div>
@@ -476,6 +498,7 @@ export default function App() {
 
   const [viewingContext, setViewingContext] = useState(null);
   const [sharedAccounts, setSharedAccounts] = useState([]);
+  const [myCollaborators, setMyCollaborators] = useState([]);
   const [newCollabNotification, setNewCollabNotification] = useState(false);
 
   const [currentInvoice, setCurrentInvoice] = useState({ image: null, data: null });
@@ -542,7 +565,8 @@ export default function App() {
 
         await Promise.all([
           fetchInvoices(currentUser.uid),
-          fetchCollaborations(currentUser.email)
+          fetchCollaborations(currentUser.email),
+          fetchMyCollaborators(currentUser.uid)
         ]);
 
       } else {
@@ -568,6 +592,20 @@ export default function App() {
       }
     } catch (err) {
       console.error("Error fetching collaborations:", err);
+    }
+  };
+
+  const fetchMyCollaborators = async (myUid) => {
+    try {
+      const q = query(collection(db, "collaborations"), where("ownerUid", "==", myUid));
+      const querySnapshot = await getDocs(q);
+      const collabs = [];
+      querySnapshot.forEach((doc) => {
+        collabs.push({ id: doc.id, ...doc.data() });
+      });
+      setMyCollaborators(collabs);
+    } catch (err) {
+      console.error("Error fetching my collaborators:", err);
     }
   };
 
@@ -621,12 +659,27 @@ export default function App() {
         createdAt: serverTimestamp()
       });
       alert(`Invitación enviada a ${emailToInvite}`);
+      fetchMyCollaborators(user.uid);
     } catch (err) {
       console.error("Error inviting:", err);
       alert("Error al invitar colaborador");
     } finally {
       setLoading(false);
       setLoadingMessage('Cargando...');
+    }
+  };
+
+  const handleRevokeAccess = async (collabId) => {
+    if (!confirm("¿Estás seguro de que quieres revocar el acceso a este usuario?")) return;
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, "collaborations", collabId));
+      await fetchMyCollaborators(user.uid);
+    } catch (err) {
+      console.error("Error revoking access:", err);
+      alert("Error al revocar acceso");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -948,7 +1001,15 @@ export default function App() {
         await updateProfile(userCredential.user, { displayName: name });
         setCurrentView('welcome');
       }
-      catch (err) { setError(err.message); setLoading(false); }
+      catch (err) {
+        console.error(err);
+        let msg = "Error al registrarse. Inténtalo de nuevo.";
+        if (err.code === 'auth/email-already-in-use') msg = "Este correo ya está registrado. Por favor, inicia sesión.";
+        if (err.code === 'auth/invalid-email') msg = "El correo electrónico no es válido.";
+        if (err.code === 'auth/weak-password') msg = "La contraseña debe tener al menos 6 caracteres.";
+        setError(msg);
+        setLoading(false);
+      }
     };
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -959,7 +1020,12 @@ export default function App() {
             <Input label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             <Input label="Confirmar" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-            {error && <p className="text-red-500 text-sm">{error}</p>}
+            {error && (
+              <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm font-medium animate-fade-in border border-red-100">
+                <AlertCircle size={16} className="flex-shrink-0" />
+                {error}
+              </div>
+            )}
             <Button type="submit" className="w-full shadow-lg" disabled={loading}>Registrarse</Button>
           </form>
           <div className="mt-6 text-center"><button onClick={() => setCurrentView('login')} className="text-[#4E73DF]">Volver al Login</button></div>
@@ -1361,6 +1427,8 @@ export default function App() {
           onUpdateProfile={handleUpdateProfile}
           installPrompt={installPrompt}
           onInstall={handleInstallClick}
+          myCollaborators={myCollaborators}
+          handleRevokeAccess={handleRevokeAccess}
         />}
       </main>
 
