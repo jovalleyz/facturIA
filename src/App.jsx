@@ -761,8 +761,8 @@ export default function App() {
 
     const fetchWithRetry = async (retries = 3, delay = 1000) => {
       try {
-        // CHANGED: Use gemini-1.5-flash-latest to resolve 404 error with alias
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        // CHANGED: Reverted to gemini-2.5-flash-preview-09-2025 per user request
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
