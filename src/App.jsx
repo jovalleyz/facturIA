@@ -1013,8 +1013,7 @@ export default function App() {
             filteredInvoices.map((inv) => (
               <div
                 key={inv.id}
-                onClick={() => handleInvoiceClick(inv)}
-                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow cursor-pointer active:scale-[0.98]"
+                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
@@ -1325,7 +1324,7 @@ export default function App() {
   if (currentView === 'welcome') return <WelcomeView />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
+    <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
       <DuplicateModal
         duplicateData={duplicateWarning}
         onCancel={() => {
@@ -1337,7 +1336,7 @@ export default function App() {
           handleInvoiceClick(data);
         }}
       />
-      <header className={`px-4 py-4 shadow-sm sticky top-0 z-30 flex items-center justify-between transition-colors ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
+      <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
           <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
