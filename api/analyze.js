@@ -34,9 +34,9 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'No text found in image' });
         }
 
-        // 2. Parse with Gemini 2.0 Flash (Fastest & Newest)
+        // 2. Parse with Gemini 2.5 Flash (User Specified)
         const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
-        const MODEL_ID = 'gemini-2.0-flash-exp';
+        const MODEL_ID = 'gemini-2.5-flash-preview-09-2025';
         const prompt = `Analiza este texto extraído de una factura dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis (número), propina (número), categoria.
     Texto:
     ${fullText}`;
