@@ -275,13 +275,19 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
 
           <div className="space-y-2 pt-2">
             <div className="flex justify-between text-sm text-gray-600">
-              <span>Subtotal (aprox):</span>
-              <span>{formatCurrency((parseFloat(invoice.total || 0) - parseFloat(invoice.itbis || 0) - parseFloat(invoice.propina || 0)))}</span>
+              <span>Monto Neto:</span>
+              <span>{formatCurrency((parseFloat(invoice.total || 0) - parseFloat(invoice.itbis18 || invoice.itbis || 0) - parseFloat(invoice.itbis16 || 0) - parseFloat(invoice.propina || 0)))}</span>
             </div>
             <div className="flex justify-between text-sm text-gray-600">
-              <span>ITBIS:</span>
-              <span>{formatCurrency(invoice.itbis || 0)}</span>
+              <span>ITBIS (18%):</span>
+              <span>{formatCurrency(invoice.itbis18 || invoice.itbis || 0)}</span>
             </div>
+            {(invoice.itbis16 > 0) && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>ITBIS (16%):</span>
+                <span>{formatCurrency(invoice.itbis16 || 0)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm text-gray-600">
               <span>Propina:</span>
               <span>{formatCurrency(invoice.propina || 0)}</span>
@@ -719,12 +725,13 @@ export default function App() {
 
   const exportToCSV = () => {
     if (invoices.length === 0) return;
-    const headers = ["Fecha", "Nombre Negocio", "RNC", "NCF", "Categoría", "Monto Neto", "ITBIS", "Propina", "Monto Total"];
+    const headers = ["Fecha", "Nombre Negocio", "RNC", "NCF", "Categoría", "Monto Neto", "ITBIS (18%)", "ITBIS (16%)", "Propina", "Monto Total"];
     const rows = invoices.map(inv => {
       const total = parseFloat(inv.total || 0);
-      const itbis = parseFloat(inv.itbis || 0);
+      const itbis18 = parseFloat(inv.itbis18 || inv.itbis || 0);
+      const itbis16 = parseFloat(inv.itbis16 || 0);
       const propina = parseFloat(inv.propina || 0);
-      const subtotal = total - itbis - propina;
+      const subtotal = total - itbis18 - itbis16 - propina;
 
       return [
         inv.fecha || "",
@@ -733,7 +740,8 @@ export default function App() {
         inv.ncf || "",
         inv.categoria || "",
         subtotal.toFixed(2),
-        itbis.toFixed(2),
+        itbis18.toFixed(2),
+        itbis16.toFixed(2),
         propina.toFixed(2),
         total.toFixed(2)
       ];
@@ -1282,7 +1290,14 @@ export default function App() {
   );
 
   const VerifyView = () => {
-    const [formData, setFormData] = useState(currentInvoice.data || {});
+    const [formData, setFormData] = useState(() => {
+      const data = currentInvoice.data || {};
+      return {
+        ...data,
+        itbis18: data.itbis18 !== undefined ? data.itbis18 : data.itbis, // Map legacy itbis to itbis18
+        itbis16: data.itbis16 || ''
+      };
+    });
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
     // Obtener nombres de negocios únicos para autocompletar
@@ -1347,10 +1362,22 @@ export default function App() {
                 </div>
               </div>
 
+              {/* Monto Neto Calculado */}
+              <div className="mb-4 flex justify-between items-center px-2">
+                <span className="text-sm font-medium text-gray-600">Monto Neto (Calc):</span>
+                <span className="font-bold text-gray-800">
+                  {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
+                </span>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS</label>
-                  <input type="number" name="itbis" value={formData.itbis || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (18%)</label>
+                  <input type="number" name="itbis18" value={formData.itbis18 !== undefined ? formData.itbis18 : ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (16%)</label>
+                  <input type="number" name="itbis16" value={formData.itbis16 || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
@@ -1367,6 +1394,9 @@ export default function App() {
                 <option value="Transporte">Transporte</option>
                 <option value="Servicios">Servicios</option>
                 <option value="Salud">Salud</option>
+                <option value="Combustible">Combustible</option>
+                <option value="Ocio">Ocio</option>
+                <option value="Autocuidado">Autocuidado</option>
                 <option value="Otros">Otros</option>
               </select>
             </div>

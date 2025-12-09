@@ -38,7 +38,7 @@ export default async function handler(req, res) {
         // Verified ID from search: gemini-2.5-flash-lite
         const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
         const MODEL_ID = 'gemini-2.5-flash-lite';
-        const prompt = `Analiza este texto extraído de una factura dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis (número), propina (número), categoria.
+        const prompt = `Analiza este texto extraído de una factura dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
     Texto:
     ${fullText}`;
 
