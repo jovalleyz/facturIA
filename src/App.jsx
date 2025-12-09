@@ -309,6 +309,31 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
   );
 };
 
+const DeleteConfirmationModal = ({ onConfirm, onCancel }) => {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+        <div className="bg-red-50 p-6 text-center border-b border-red-100">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
+            <Trash2 size={32} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">¿Eliminar Factura?</h3>
+          <p className="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
+        </div>
+
+        <div className="p-6 flex gap-3">
+          <Button variant="ghost" onClick={onCancel} className="flex-1 border border-gray-200">
+            Cancelar
+          </Button>
+          <Button onClick={onConfirm} className="flex-1 bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-200">
+            Sí, Eliminar
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES EXTERNOS ---
 
 const SettingsView = ({
@@ -512,6 +537,7 @@ export default function App() {
   const [stats, setStats] = useState({ total: 0, count: 0, itbis: 0, byCategory: {} });
 
   const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState(null); // ID de la factura a eliminar
   const [installPrompt, setInstallPrompt] = useState(null);
   useEffect(() => {
     const handler = (e) => {
@@ -916,11 +942,15 @@ export default function App() {
     }
   };
 
-  const handleDeleteInvoice = async (invoiceId) => {
-    if (!window.confirm("¿Estás seguro de que quieres eliminar esta factura? Esta acción no se puede deshacer.")) {
-      return;
-    }
+  const handleDeleteInvoice = (invoiceId) => {
+    setDeleteConfirmation(invoiceId);
+  };
 
+  const confirmDelete = async () => {
+    const invoiceId = deleteConfirmation;
+    if (!invoiceId) return;
+
+    setDeleteConfirmation(null); // Cerrar modal
     setLoading(true);
     setLoadingMessage('Eliminando factura...');
     try {
@@ -931,7 +961,7 @@ export default function App() {
 
       await deleteDoc(doc(db, "invoices", invoiceId));
       await fetchInvoices(viewingContext.uid);
-      setCurrentView('history'); // Volver al historial tras borrar
+      setCurrentView('history');
       setCurrentInvoice({ image: null, data: null });
     } catch (err) {
       console.error("Error al eliminar factura:", err);
@@ -1470,6 +1500,14 @@ export default function App() {
           handleInvoiceClick(data);
         }}
       />
+
+      {deleteConfirmation && (
+        <DeleteConfirmationModal
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirmation(null)}
+        />
+      )}
+
       <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
