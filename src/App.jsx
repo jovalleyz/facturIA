@@ -1504,6 +1504,13 @@ export default function App() {
         />
       )}
 
+      {viewingInvoice && (
+        <InvoiceDetailModal
+          invoice={viewingInvoice}
+          onClose={() => setViewingInvoice(null)}
+        />
+      )}
+
       <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
         <div className="flex items-center gap-2">
           <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
