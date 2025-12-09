@@ -916,6 +916,32 @@ export default function App() {
     }
   };
 
+  const handleDeleteInvoice = async (invoiceId) => {
+    if (!window.confirm("¿Estás seguro de que quieres eliminar esta factura? Esta acción no se puede deshacer.")) {
+      return;
+    }
+
+    setLoading(true);
+    setLoadingMessage('Eliminando factura...');
+    try {
+      if (viewingContext.type === 'shared') {
+        alert("Como colaborador, solo tienes permisos de lectura.");
+        return;
+      }
+
+      await deleteDoc(doc(db, "invoices", invoiceId));
+      await fetchInvoices(viewingContext.uid);
+      setCurrentView('history'); // Volver al historial tras borrar
+      setCurrentInvoice({ image: null, data: null });
+    } catch (err) {
+      console.error("Error al eliminar factura:", err);
+      setError("Error al eliminar la factura.");
+    } finally {
+      setLoading(false);
+      setLoadingMessage('Cargando...');
+    }
+  };
+
   const handleUpdateProfile = async (newName, newPhotoFile) => {
     setLoading(true);
     setLoadingMessage('Actualizando perfil...');
@@ -1401,12 +1427,24 @@ export default function App() {
               </select>
             </div>
 
-            <div className="pt-4 flex gap-3">
-              {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
-              {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
-              <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
-                {formData.id ? 'Actualizar' : 'Guardar'}
-              </Button>
+            <div className="pt-4 flex flex-col gap-3">
+              <div className="flex gap-3">
+                {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
+                {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
+                <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
+                  {formData.id ? 'Actualizar' : 'Guardar'}
+                </Button>
+              </div>
+
+              {formData.id && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteInvoice(formData.id)}
+                  className="w-full text-red-500 text-sm font-medium py-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> Eliminar Factura
+                </button>
+              )}
             </div>
           </form>
         </Card>
