@@ -731,7 +731,9 @@ export default function App() {
 
         const amount = parseFloat(data.total || 0);
         totalAmount += amount;
-        totalItbis += parseFloat(data.itbis || 0);
+        const itbis18 = parseFloat(data.itbis18 || data.itbis || 0);
+        const itbis16 = parseFloat(data.itbis16 || 0);
+        totalItbis += (itbis18 + itbis16);
 
         const cat = data.categoria || 'Otros';
         if (!categoryMap[cat]) categoryMap[cat] = 0;
