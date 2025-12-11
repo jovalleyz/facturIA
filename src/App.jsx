@@ -1329,6 +1329,7 @@ export default function App() {
                   className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
+
                     <div className="bg-blue-50 p-2 rounded-lg text-blue-600"><FileText size={20} /></div>
                     <div><p className="font-bold text-gray-800 text-sm truncate w-32">{inv.nombre_negocio || 'Desconocido'}</p><p className="text-xs text-gray-500">{inv.fecha || 'Sin fecha'}</p></div>
                   </div>
@@ -1347,19 +1348,49 @@ export default function App() {
     const [activeTab, setActiveTab] = useState('expense');
     const currentStats = stats[activeTab];
     const sortedCategories = Object.entries(currentStats.byCategory).sort(([, a], [, b]) => b - a);
+
     return (
       <div className="p-4 pb-24 space-y-6 animate-fade-in">
         <h2 className="text-2xl font-bold text-gray-900">Estadísticas</h2>
-        <Card className="border-t-4 border-t-[#4E73DF]">
-          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><PieChart size={18} /> Por Categoría</h3>
-          {sortedCategories.length === 0 ? <p className="text-gray-400 text-center py-8">Sin datos suficientes para mostrar gráficos.</p> : (
+
+        <TabSwitch
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={[
+            { id: 'expense', label: 'GASTOS', color: 'blue' },
+            { id: 'income', label: 'INGRESOS', color: 'green' }
+          ]}
+        />
+
+        <Card className={`border-t-4 ${activeTab === 'expense' ? 'border-t-[#4E73DF]' : 'border-t-green-500'}`}>
+          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <PieChart size={18} className={activeTab === 'expense' ? 'text-[#4E73DF]' : 'text-green-500'} />
+            Por Categoría
+          </h3>
+          {sortedCategories.length === 0 ? (
+            <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
+              <PieChart size={48} className="mx-auto mb-2 opacity-20" />
+              <p>No hay datos de {activeTab === 'expense' ? 'gastos' : 'ingresos'} para mostrar.</p>
+            </div>
+          ) : (
             <div className="space-y-4">
               {sortedCategories.map(([cat, amount], index) => {
                 const percentage = (amount / currentStats.total) * 100;
                 return (
                   <div key={cat}>
-                    <div className="flex justify-between text-sm mb-1"><span className="font-medium text-gray-700">{cat}</span><span className="text-gray-500 font-medium">{formatCurrency(amount)} ({percentage.toFixed(0)}%)</span></div>
-                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner"><div className="h-3 rounded-full transition-all duration-500" style={{ width: `${percentage}%`, backgroundColor: COLORS.chart[index % COLORS.chart.length] }}></div></div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="font-medium text-gray-700">{cat}</span>
+                      <span className="text-gray-500 font-medium">{formatCurrency(amount)} ({percentage.toFixed(0)}%)</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
+                      <div
+                        className="h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${percentage}%`,
+                          backgroundColor: activeTab === 'expense' ? COLORS.chart[index % COLORS.chart.length] : (index % 2 === 0 ? '#10B981' : '#34D399')
+                        }}
+                      ></div>
+                    </div>
                   </div>
                 );
               })}
@@ -1702,7 +1733,7 @@ export default function App() {
       {installPrompt && !localStorage.getItem('pwa_dismissed') && (
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
           <div className="flex items-center gap-3">
-            <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
+            <div className="bg-[#4E73DF] p-2 rounded-lg text-white"><Download size={24} /></div>
             <div className="flex-1">
               <p className="font-bold text-gray-900">Instalar FacturIA</p>
               <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
