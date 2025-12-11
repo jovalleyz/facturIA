@@ -48,6 +48,7 @@ export default async function handler(req, res) {
              ncf (si aplica), 
              fecha (YYYY-MM-DD), 
              nombre_negocio (Nombre del CLIENTE o Fuente del Ingreso. Ignora "OVM Consulting"), 
+             moneda (Detectar si es "DOP" o "USD"),
              total (número), 
              itbis18 (número, impuesto facturado), 
              itbis16 (número), 
@@ -57,7 +58,7 @@ export default async function handler(req, res) {
              Texto:
              ${fullText}`;
         } else {
-            prompt = `Analiza este texto extraído de una factura de gasto dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
+            prompt = `Analiza este texto extraído de una factura de gasto dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, moneda (Detectar si es "DOP" o "USD"), total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
              Texto:
              ${fullText}`;
         }
@@ -79,7 +80,42 @@ export default async function handler(req, res) {
         }
 
         const cleanJson = textResponse.replace(/```json|```/g, '').trim();
-        const parsedData = JSON.parse(cleanJson);
+        let parsedData = JSON.parse(cleanJson);
+
+        // USD Conversion Logic
+        if (parsedData.moneda === 'USD') {
+            try {
+                console.log('USD detected, fetching exchange rate...');
+                const infoDolarResponse = await fetch('https://www.infodolar.com.do/');
+                const html = await infoDolarResponse.text();
+
+                // Regex to find the "Venta" rate in the table with id="DolarPromedio"
+                // We look for the table, then the row with "Promedio InfoDolar", then the 3rd cell (Venta)
+                // Structure: <table ... id="DolarPromedio"> ... <tbody> ... <td ...>Promedio InfoDolar</td> ... <td ...>Compra</td> ... <td ...>Venta</td>
+
+                // Simplified regex approach: Find "Promedio InfoDolar", then look for the next two "colCompraVenta" cells
+                // The Venta rate is in the second "colCompraVenta" cell after "Promedio InfoDolar"
+
+                // Let's try to match the specific cell content for Venta
+                // <td class="colCompraVenta" data-order="$64.48">
+
+                const promedioMatch = html.match(/id="DolarPromedio"[\s\S]*?Promedio InfoDolar[\s\S]*?colCompraVenta[\s\S]*?colCompraVenta[^>]*>([\s\S]*?)<\/td>/);
+
+                if (promedioMatch && promedioMatch[1]) {
+                    // Extract the number from the cell content (e.g., "$64.48 ...")
+                    const rateMatch = promedioMatch[1].match(/\$(\d+\.\d+)/);
+                    if (rateMatch && rateMatch[1]) {
+                        const rate = parseFloat(rateMatch[1]);
+                        parsedData.tasa_cambio = rate;
+                        parsedData.total_dop = parsedData.total * rate;
+                        console.log(`Exchange rate found: ${rate}. Total DOP: ${parsedData.total_dop}`);
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching exchange rate:', error);
+                // Fallback: User will have to enter it manually
+            }
+        }
 
         return res.status(200).json(parsedData);
 

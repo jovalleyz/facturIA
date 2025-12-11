@@ -1491,15 +1491,43 @@ export default function App() {
   const VerifyView = () => {
     const [formData, setFormData] = useState(() => {
       const data = currentInvoice.data || {};
+      const isUSD = data.moneda === 'USD';
       return {
-        ...data,
         ...data,
         itbis18: data.itbis18 !== undefined ? data.itbis18 : data.itbis, // Map legacy itbis to itbis18
         itbis16: data.itbis16 || '',
-        type: currentInvoice.type || data.type || 'expense'
+        type: currentInvoice.type || data.type || 'expense',
+        moneda: data.moneda || 'DOP',
+        tasa_cambio: data.tasa_cambio || '',
+        original_total: isUSD ? data.total : '',
+        total: isUSD ? (data.total_dop || '') : (data.total || '')
       };
     });
-    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    const handleChange = (e) => {
+      const { name, value } = e.target;
+      setFormData(prev => {
+        const newData = { ...prev, [name]: value };
+
+        // Auto-calculate DOP total if USD fields change
+        if (prev.moneda === 'USD' && (name === 'original_total' || name === 'tasa_cambio')) {
+          const amount = parseFloat(name === 'original_total' ? value : prev.original_total) || 0;
+          const rate = parseFloat(name === 'tasa_cambio' ? value : prev.tasa_cambio) || 0;
+          if (amount && rate) {
+            newData.total = (amount * rate).toFixed(2);
+          }
+        }
+
+        // Reset if switching to DOP
+        if (name === 'moneda' && value === 'DOP') {
+          newData.original_total = '';
+          newData.tasa_cambio = '';
+          // Keep the current total as the main total
+        }
+
+        return newData;
+      });
+    };
 
     // Obtener nombres de negocios únicos para autocompletar
     const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
@@ -1560,8 +1588,59 @@ export default function App() {
             </div>
 
             <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
+              {/* Currency Selection */}
+              <div className="mb-4 px-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleChange({ target: { name: 'moneda', value: 'DOP' } })}
+                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors border ${formData.moneda === 'DOP' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    🇩🇴 DOP (Peso)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleChange({ target: { name: 'moneda', value: 'USD' } })}
+                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors border ${formData.moneda === 'USD' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
+                  >
+                    🇺🇸 USD (Dólar)
+                  </button>
+                </div>
+              </div>
+
+              {formData.moneda === 'USD' && (
+                <div className="grid grid-cols-2 gap-4 mb-4 px-2 animate-fade-in">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Monto USD</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
+                      <input
+                        type="number"
+                        name="original_total"
+                        value={formData.original_total || ''}
+                        onChange={handleChange}
+                        className="w-full pl-6 pr-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                        placeholder="0.00"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Tasa Cambio</label>
+                    <input
+                      type="number"
+                      name="tasa_cambio"
+                      value={formData.tasa_cambio || ''}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
+                      placeholder="Ej: 60.50"
+                    />
+                  </div>
+                </div>
+              )}
+
               <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">{formData.moneda === 'USD' ? 'Monto en Pesos (Calc)' : 'Monto Total'}</label>
                 <div className="relative">
                   <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
                   <input
@@ -1569,7 +1648,8 @@ export default function App() {
                     name="total"
                     value={formData.total || ''}
                     onChange={handleChange}
-                    className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500'}`}
+                    readOnly={formData.moneda === 'USD'}
+                    className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.moneda === 'USD' ? 'bg-gray-50 text-gray-500' : (formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500')}`}
                     placeholder="0.00"
                   />
                 </div>
