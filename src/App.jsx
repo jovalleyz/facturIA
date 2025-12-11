@@ -315,6 +315,30 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
               <span>Total:</span>
               <span>{formatCurrency(invoice.total)}</span>
             </div>
+
+            {invoice.moneda === 'USD' && invoice.original_total && (
+              <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
+                <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider">Detalles Originales (USD)</p>
+                <div className="space-y-1 text-xs text-gray-500">
+                  <div className="flex justify-between">
+                    <span>Monto Neto:</span>
+                    <span>${(parseFloat(invoice.original_total) - ((parseFloat(invoice.itbis18 || invoice.itbis || 0) + parseFloat(invoice.itbis16 || 0) + parseFloat(invoice.propina || 0)) / (parseFloat(invoice.tasa_cambio) || 1))).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>ITBIS:</span>
+                    <span>${((parseFloat(invoice.itbis18 || invoice.itbis || 0) + parseFloat(invoice.itbis16 || 0)) / (parseFloat(invoice.tasa_cambio) || 1)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Propina:</span>
+                    <span>${(parseFloat(invoice.propina || 0) / (parseFloat(invoice.tasa_cambio) || 1)).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between font-bold text-gray-600 pt-1">
+                    <span>Total USD:</span>
+                    <span>${parseFloat(invoice.original_total).toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="pt-2">
