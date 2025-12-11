@@ -1259,37 +1259,39 @@ export default function App() {
 
     return (
       <div className="p-4 pb-24 space-y-6 animate-fade-in">
-        {/* Header con Contexto */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-              {viewingContext?.type === 'personal' && (
-                <Avatar name={viewingContext.name} url={viewingContext.photoURL} size="sm" />
-              )}
-              Hola, {viewingContext.name.split(' ')[0]}
-            </h2>
-            <p className="text-gray-500 text-sm flex items-center gap-1">
-              {viewingContext?.type === 'personal' ? 'Tu espacio personal' : (
-                <span className="text-orange-500 font-medium flex items-center gap-1">
-                  <Briefcase size={12} /> Viendo datos de: {viewingContext.name || viewingContext.email}
-                </span>
-              )}
-            </p>
+        <div className="sticky top-0 z-50 bg-[#F8FAFC] pb-2 pt-2 -mx-4 px-4 shadow-sm transition-all">
+          {/* Header con Contexto */}
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                {viewingContext?.type === 'personal' && (
+                  <Avatar name={viewingContext.name} url={viewingContext.photoURL} size="sm" />
+                )}
+                Hola, {viewingContext.name.split(' ')[0]}
+              </h2>
+              <p className="text-gray-500 text-sm flex items-center gap-1">
+                {viewingContext?.type === 'personal' ? 'Tu espacio personal' : (
+                  <span className="text-orange-500 font-medium flex items-center gap-1">
+                    <Briefcase size={12} /> Viendo datos de: {viewingContext.name || viewingContext.email}
+                  </span>
+                )}
+              </p>
+            </div>
+            <button onClick={() => setCurrentView('settings')} className="p-2 bg-white rounded-full shadow-sm text-gray-600 relative hover:bg-gray-50 transition-colors">
+              <Settings size={20} />
+              {newCollabNotification && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
+            </button>
           </div>
-          <button onClick={() => setCurrentView('settings')} className="p-2 bg-white rounded-full shadow-sm text-gray-600 relative hover:bg-gray-50 transition-colors">
-            <Settings size={20} />
-            {newCollabNotification && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
-          </button>
-        </div>
 
-        <TabSwitch
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          tabs={[
-            { id: 'expense', label: 'GASTOS', color: 'blue' },
-            { id: 'income', label: 'INGRESOS', color: 'green' }
-          ]}
-        />
+          <TabSwitch
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            tabs={[
+              { id: 'expense', label: 'GASTOS', color: 'blue' },
+              { id: 'income', label: 'INGRESOS', color: 'green' }
+            ]}
+          />
+        </div>
 
         <Card className={`relative text-white border-none shadow-xl overflow-hidden ${activeTab === 'expense' ? 'bg-gradient-to-r from-[#4E73DF] to-[#224abe]' : 'bg-gradient-to-r from-green-500 to-emerald-600'}`}>
           {/* Fondo decorativo con iconos */}
