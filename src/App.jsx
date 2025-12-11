@@ -577,7 +577,6 @@ export default function App() {
   const [sharedAccounts, setSharedAccounts] = useState([]);
   const [myCollaborators, setMyCollaborators] = useState([]);
 
-
   const [currentInvoice, setCurrentInvoice] = useState({ image: null, data: null });
   const [invoices, setInvoices] = useState([]);
   const [stats, setStats] = useState({
@@ -645,11 +644,15 @@ export default function App() {
           setCurrentView('dashboard');
         }
 
-        await Promise.all([
-          fetchInvoices(currentUser.uid),
-          fetchCollaborations(currentUser.email),
-          fetchMyCollaborators(currentUser.uid)
-        ]);
+        try {
+          await Promise.all([
+            fetchInvoices(currentUser.uid),
+            fetchCollaborations(currentUser.email),
+            fetchMyCollaborators(currentUser.uid)
+          ]);
+        } catch (error) {
+          console.error("Error loading initial data:", error);
+        }
 
       } else {
         setCurrentView('login');
@@ -1302,7 +1305,6 @@ export default function App() {
           </div>
           <button onClick={() => setCurrentView('settings')} className="p-2 bg-white rounded-full shadow-sm text-gray-600 relative hover:bg-gray-50 transition-colors">
             <Settings size={20} />
-            {newCollabNotification && <span className="absolute top-0 right-0 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
           </button>
         </div>
 
@@ -1777,6 +1779,11 @@ export default function App() {
   if (currentView === 'register') return <RegisterView />;
   if (currentView === 'welcome') return <WelcomeView />;
 
+  // Safety check: If we are in a protected view but viewingContext is not ready, show loader
+  if (!viewingContext && currentView !== 'login' && currentView !== 'register') {
+    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
+  }
+
   return (
     <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
       <DuplicateModal
@@ -1805,10 +1812,10 @@ export default function App() {
         />
       )}
 
-      <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
+      <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext?.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
         <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
-          <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
+          <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext?.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
+          <span className={`font-bold text-xl tracking-tight ${viewingContext?.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
         </div>
       </header>
 
@@ -1858,7 +1865,7 @@ export default function App() {
         <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
           <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
         </button>
-        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
+        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext?.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
           <Camera size={24} />
         </button>
         <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
@@ -1866,7 +1873,6 @@ export default function App() {
         </button>
         <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
           <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
-
         </button>
       </nav>
     </div>
