@@ -50,7 +50,7 @@ export default async function handler(req, res) {
              itbis18 (número, impuesto facturado), 
              itbis16 (número), 
              propina (número), 
-             categoria (Sugerir una de: "Salario", "Freelance", "Asesorías", "Venta de Artículos", "Ventas varias", "Otros"),
+             categoria (Sugerir una de: "Salario", "Freelance", "Asesorías", "Venta de Artículos", "Ventas varias", "Alquiler", "Otros"),
              descripcion (Breve descripción del concepto).
              Texto:
              ${fullText}`;

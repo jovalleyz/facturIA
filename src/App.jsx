@@ -1580,6 +1580,10 @@ export default function App() {
                     <option value="Salud">Salud</option>
                     <option value="Combustible">Combustible</option>
                     <option value="Ocio">Ocio</option>
+                    <option value="Autocuidado">Autocuidado</option>
+                    <option value="Educación">Educación</option>
+                    <option value="Hogar">Hogar</option>
+                    <option value="Otros">Otros</option>
                   </>
                 ) : (
                   <>
@@ -1588,13 +1592,10 @@ export default function App() {
                     <option value="Asesorías">Asesorías</option>
                     <option value="Venta de Artículos">Venta de Artículos</option>
                     <option value="Ventas varias">Ventas varias</option>
+                    <option value="Alquiler">Alquiler</option>
                     <option value="Otros">Otros</option>
                   </>
                 )}
-                <option value="Autocuidado">Autocuidado</option>
-                <option value="Educación">Educación</option>
-                <option value="Hogar">Hogar</option>
-                <option value="Otros">Otros</option>
               </select>
             </div>
 
