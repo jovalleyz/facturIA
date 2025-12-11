@@ -1500,7 +1500,7 @@ export default function App() {
         moneda: data.moneda || 'DOP',
         tasa_cambio: data.tasa_cambio || '',
         original_total: isUSD ? data.total : '',
-        total: isUSD ? (data.total_dop || '') : (data.total || '')
+        total: isUSD ? (data.total_dop ? parseFloat(data.total_dop).toFixed(2) : '') : (data.total || '')
       };
     });
 
@@ -1642,13 +1642,13 @@ export default function App() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">{formData.moneda === 'USD' ? 'Monto en Pesos' : 'Monto Total'}</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
                 <div className="relative">
                   <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
                   <input
                     type="number"
                     name="total"
-                    value={formData.total || ''}
+                    value={formData.total ? parseFloat(formData.total).toFixed(2) : ''}
                     onChange={handleChange}
                     readOnly={formData.moneda === 'USD'}
                     className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.moneda === 'USD' ? 'bg-gray-50 text-gray-500' : (formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500')}`}

@@ -46,7 +46,7 @@ export default async function handler(req, res) {
              
              REGLAS CRÍTICAS DE EXTRACCIÓN:
              1. BUSCA EL CAMPO "CLIENTE:" o "FACTURADO A:". El valor que sigue es el 'nombre_negocio'.
-             2. PROHIBIDO: NUNCA uses "OVM CONSULTING", "OVALLEY & EMPULSO", ni sus variaciones como 'nombre_negocio'.
+             2. PROHIBIDO: NUNCA uses "OVM CONSULTING", "OVALLEY & EMPULSO", "OVALLEY & EMPULSO PROFESSIONAL CONSULTANTS" ni sus variaciones como 'nombre_negocio'.
              3. PROHIBIDO: NUNCA uses el RNC "131932037" o "131-93203-7" como 'rnc'. Ese es el emisor. Busca el RNC del CLIENTE.
              4. Si no encuentras un cliente distinto al emisor, devuelve null en 'nombre_negocio' y 'rnc'.
 
