@@ -41,11 +41,13 @@ export default async function handler(req, res) {
 
         let prompt;
         if (type === 'income') {
-            prompt = `Analiza este texto de un comprobante de ingreso o factura de venta. Extrae en JSON puro: 
-             rnc (del emisor si aparece, o del cliente), 
+            prompt = `Analiza este texto de un comprobante de ingreso o factura de venta emitida por "OVM Consulting".
+             IMPORTANTE: El campo 'nombre_negocio' DEBE ser el nombre del CLIENTE a quien se le factura, NO "OVM Consulting".
+             Extrae en JSON puro: 
+             rnc (del CLIENTE si aparece, NO de OVM Consulting), 
              ncf (si aplica), 
              fecha (YYYY-MM-DD), 
-             nombre_negocio (Nombre del Cliente o Fuente del Ingreso), 
+             nombre_negocio (Nombre del CLIENTE o Fuente del Ingreso. Ignora "OVM Consulting"), 
              total (número), 
              itbis18 (número, impuesto facturado), 
              itbis16 (número), 
