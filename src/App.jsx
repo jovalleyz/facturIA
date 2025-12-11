@@ -576,7 +576,7 @@ export default function App() {
   const [viewingContext, setViewingContext] = useState(null);
   const [sharedAccounts, setSharedAccounts] = useState([]);
   const [myCollaborators, setMyCollaborators] = useState([]);
-  const [newCollabNotification, setNewCollabNotification] = useState(false);
+
 
   const [currentInvoice, setCurrentInvoice] = useState({ image: null, data: null });
   const [invoices, setInvoices] = useState([]);
@@ -668,10 +668,7 @@ export default function App() {
         accounts.push({ id: doc.id, ...doc.data() });
       });
       setSharedAccounts(accounts);
-      if (accounts.length > 0) {
-        setNewCollabNotification(true);
-        setTimeout(() => setNewCollabNotification(false), 5000);
-      }
+
     } catch (err) {
       console.error("Error fetching collaborations:", err);
     }
@@ -1869,7 +1866,7 @@ export default function App() {
         </button>
         <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
           <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
-          {newCollabNotification && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+
         </button>
       </nav>
     </div>
