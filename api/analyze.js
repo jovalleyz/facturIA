@@ -6,7 +6,7 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { image } = req.body; // Base64 image
+        const { image, type } = req.body; // Base64 image, type ('expense' | 'income')
         if (!image) {
             return res.status(400).json({ error: 'Missing image data' });
         }
@@ -38,9 +38,27 @@ export default async function handler(req, res) {
         // Verified ID from search: gemini-2.5-flash-lite
         const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
         const MODEL_ID = 'gemini-2.5-flash-lite';
-        const prompt = `Analiza este texto extraído de una factura dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
-    Texto:
-    ${fullText}`;
+
+        let prompt;
+        if (type === 'income') {
+            prompt = `Analiza este texto de un comprobante de ingreso o factura de venta. Extrae en JSON puro: 
+             rnc (del emisor si aparece, o del cliente), 
+             ncf (si aplica), 
+             fecha (YYYY-MM-DD), 
+             nombre_negocio (Nombre del Cliente o Fuente del Ingreso), 
+             total (número), 
+             itbis18 (número, impuesto facturado), 
+             itbis16 (número), 
+             propina (número), 
+             categoria (Sugerir una de: "Salario", "Freelance", "Asesorías", "Venta de Artículos", "Ventas varias", "Otros"),
+             descripcion (Breve descripción del concepto).
+             Texto:
+             ${fullText}`;
+        } else {
+            prompt = `Analiza este texto extraído de una factura de gasto dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
+             Texto:
+             ${fullText}`;
+        }
 
         const geminiResponse = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL_ID}:generateContent?key=${GEMINI_API_KEY}`, {
             method: 'POST',
