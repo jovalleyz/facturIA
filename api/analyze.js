@@ -41,14 +41,20 @@ export default async function handler(req, res) {
 
         let prompt;
         if (type === 'income') {
-            prompt = `Analiza este texto de un comprobante de ingreso o factura de venta emitida por "OVM Consulting".
-             IMPORTANTE: El campo 'nombre_negocio' DEBE ser el nombre del CLIENTE a quien se le factura, NO "OVM Consulting".
-             IMPORTANTE: Ignora los RNC "131932037", "131-93203-7" o similares que correspondan a OVM Consulting. Busca el RNC del CLIENTE.
+            prompt = `Analiza este documento. Es una FACTURA DE INGRESO emitida por "OVM CONSULTING" (RNC 131-93203-7).
+             TU OBJETIVO: Extraer los datos del CLIENTE a quien se le factura.
+             
+             REGLAS CRÍTICAS DE EXTRACCIÓN:
+             1. BUSCA EL CAMPO "CLIENTE:" o "FACTURADO A:". El valor que sigue es el 'nombre_negocio'.
+             2. PROHIBIDO: NUNCA uses "OVM CONSULTING", "OVALLEY & EMPULSO", ni sus variaciones como 'nombre_negocio'.
+             3. PROHIBIDO: NUNCA uses el RNC "131932037" o "131-93203-7" como 'rnc'. Ese es el emisor. Busca el RNC del CLIENTE.
+             4. Si no encuentras un cliente distinto al emisor, devuelve null en 'nombre_negocio' y 'rnc'.
+
              Extrae en JSON puro: 
-             rnc (del CLIENTE si aparece, NO de OVM Consulting ni 131932037), 
-             ncf (si aplica), 
+             rnc (del CLIENTE, ejemplo: 130-83571-3), 
+             ncf (ej: B0100000154), 
              fecha (YYYY-MM-DD), 
-             nombre_negocio (Nombre del CLIENTE o Fuente del Ingreso. Ignora "OVM Consulting"), 
+             nombre_negocio (El nombre del CLIENTE. Ej: ORION INVESTMENT GROUP INC), 
              moneda (Detectar si es "DOP" o "USD"),
              total (número), 
              itbis18 (número, impuesto facturado), 

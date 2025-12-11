@@ -1514,6 +1514,7 @@ export default function App() {
           const amount = parseFloat(name === 'original_total' ? value : prev.original_total) || 0;
           const rate = parseFloat(name === 'tasa_cambio' ? value : prev.tasa_cambio) || 0;
           if (amount && rate) {
+            // Force 2 decimal places for the calculated total
             newData.total = (amount * rate).toFixed(2);
           }
         }
