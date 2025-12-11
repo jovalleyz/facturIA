@@ -1341,394 +1341,396 @@ export default function App() {
         </div>
       </div>
     );
+  };
 
-    const StatsView = () => {
-      const [activeTab, setActiveTab] = useState('expense');
-      const currentStats = stats[activeTab];
-      const sortedCategories = Object.entries(currentStats.byCategory).sort(([, a], [, b]) => b - a);
-      return (
-        <div className="p-4 pb-24 space-y-6 animate-fade-in">
-          <h2 className="text-2xl font-bold text-gray-900">Estadísticas</h2>
-          <Card className="border-t-4 border-t-[#4E73DF]">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><PieChart size={18} /> Por Categoría</h3>
-            {sortedCategories.length === 0 ? <p className="text-gray-400 text-center py-8">Sin datos suficientes para mostrar gráficos.</p> : (
-              <div className="space-y-4">
-                {sortedCategories.map(([cat, amount], index) => {
-                  const percentage = (amount / currentStats.total) * 100;
-                  return (
-                    <div key={cat}>
-                      <div className="flex justify-between text-sm mb-1"><span className="font-medium text-gray-700">{cat}</span><span className="text-gray-500 font-medium">{formatCurrency(amount)} ({percentage.toFixed(0)}%)</span></div>
-                      <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner"><div className="h-3 rounded-full transition-all duration-500" style={{ width: `${percentage}%`, backgroundColor: COLORS.chart[index % COLORS.chart.length] }}></div></div>
-                    </div>
-                  );
-                })}
+  const StatsView = () => {
+    const [activeTab, setActiveTab] = useState('expense');
+    const currentStats = stats[activeTab];
+    const sortedCategories = Object.entries(currentStats.byCategory).sort(([, a], [, b]) => b - a);
+    return (
+      <div className="p-4 pb-24 space-y-6 animate-fade-in">
+        <h2 className="text-2xl font-bold text-gray-900">Estadísticas</h2>
+        <Card className="border-t-4 border-t-[#4E73DF]">
+          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2"><PieChart size={18} /> Por Categoría</h3>
+          {sortedCategories.length === 0 ? <p className="text-gray-400 text-center py-8">Sin datos suficientes para mostrar gráficos.</p> : (
+            <div className="space-y-4">
+              {sortedCategories.map(([cat, amount], index) => {
+                const percentage = (amount / currentStats.total) * 100;
+                return (
+                  <div key={cat}>
+                    <div className="flex justify-between text-sm mb-1"><span className="font-medium text-gray-700">{cat}</span><span className="text-gray-500 font-medium">{formatCurrency(amount)} ({percentage.toFixed(0)}%)</span></div>
+                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner"><div className="h-3 rounded-full transition-all duration-500" style={{ width: `${percentage}%`, backgroundColor: COLORS.chart[index % COLORS.chart.length] }}></div></div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
+    );
+  };
+
+  const ScanView = () => {
+    const [activeTab, setActiveTab] = useState('expense');
+
+    return (
+      <div className="h-full flex flex-col p-6 animate-fade-in">
+        {viewingContext.type === 'shared' && (
+          <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
+        )}
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar {activeTab === 'expense' ? 'Documento' : 'Ingreso'}</h2>
+
+        <TabSwitch
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tabs={[
+            { id: 'expense', label: 'GASTOS', color: 'blue' },
+            { id: 'income', label: 'INGRESOS', color: 'green' }
+          ]}
+        />
+
+        <div className={`flex-1 flex flex-col gap-6 justify-center ${viewingContext.type === 'shared' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <label className={`flex flex-col items-center justify-center h-48 bg-gradient-to-br ${activeTab === 'expense' ? 'from-blue-50 to-indigo-50 border-blue-200' : 'from-green-50 to-emerald-50 border-green-200'} border-2 border-dashed rounded-2xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden group`}>
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => {
+                setCurrentInvoice(prev => ({ ...prev, type: activeTab }));
+                handleFileUpload(e);
+              }}
+              className="hidden"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+              <div className={`bg-white p-4 rounded-full shadow-md mb-2 ${activeTab === 'expense' ? 'group-hover:bg-[#4E73DF]' : 'group-hover:bg-green-500'} group-hover:text-white transition-colors`}>
+                <Camera size={32} className={`${activeTab === 'expense' ? 'text-[#4E73DF]' : 'text-green-500'} group-hover:text-white`} />
               </div>
-            )}
-          </Card>
+              <p className="font-bold text-gray-700">Usar Cámara</p>
+            </div>
+          </label>
+
+          <div className="flex items-center justify-center gap-4">
+            <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
+          </div>
+
+          <label className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all">
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                setCurrentInvoice(prev => ({ ...prev, type: activeTab }));
+                handleFileUpload(e);
+              }}
+              className="hidden"
+            />
+            <Upload size={28} className="text-gray-400 mb-2" />
+            <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
+          </label>
+
+          <div className="flex items-center justify-center gap-4">
+            <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O</span><span className="h-px bg-gray-300 w-12"></span>
+          </div>
+
+          <button
+            onClick={() => {
+              setCurrentInvoice({ data: { fecha: new Date().toISOString().split('T')[0] }, type: activeTab });
+              setCurrentView('verify');
+            }}
+            className="w-full py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2"
+          >
+            <Keyboard size={24} />
+            Ingresar Manualmente
+          </button>
         </div>
-      );
+        <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
+
+        {/* Error Message Display */}
+        {error && (
+          <div className="mx-4 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-fade-in">
+            <AlertCircle size={24} className="text-red-500 flex-shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div>}
+      </div>
+    );
+  };
+
+  const VerifyView = () => {
+    const [formData, setFormData] = useState(() => {
+      const data = currentInvoice.data || {};
+      return {
+        ...data,
+        ...data,
+        itbis18: data.itbis18 !== undefined ? data.itbis18 : data.itbis, // Map legacy itbis to itbis18
+        itbis16: data.itbis16 || '',
+        type: currentInvoice.type || data.type || 'expense'
+      };
+    });
+    const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+    // Obtener nombres de negocios únicos para autocompletar
+    const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
+
+    const isManualEntry = !formData.id && !currentInvoice.file; // No ID y no archivo (imagen)
+
+    // Lógica para autocompletar nombre de negocio al perder foco en RNC
+    const handleRncBlur = () => {
+      if (formData.rnc) {
+        const foundInvoice = invoices.find(inv => inv.rnc === formData.rnc && inv.nombre_negocio);
+        if (foundInvoice) {
+          setFormData(prev => ({ ...prev, nombre_negocio: foundInvoice.nombre_negocio }));
+        }
+      }
     };
 
-    const ScanView = () => {
-      const [activeTab, setActiveTab] = useState('expense');
+    return (
+      <div className="p-4 pb-24 animate-fade-in">
+        <h2 className="text-xl font-bold text-gray-900 mb-4">
+          {formData.id ? 'Editar Registro' : (isManualEntry ? `Registro Manual (${formData.type === 'income' ? 'Ingreso' : 'Gasto'})` : 'Validar Datos')}
+        </h2>
 
-      return (
-        <div className="h-full flex flex-col p-6 animate-fade-in">
-          {viewingContext.type === 'shared' && (
-            <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
-          )}
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar {activeTab === 'expense' ? 'Documento' : 'Ingreso'}</h2>
+        <TabSwitch
+          activeTab={formData.type}
+          onTabChange={(type) => setFormData(prev => ({ ...prev, type }))}
+          tabs={[
+            { id: 'expense', label: 'GASTOS', color: 'blue' },
+            { id: 'income', label: 'INGRESOS', color: 'green' }
+          ]}
+        />
 
-          <TabSwitch
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            tabs={[
-              { id: 'expense', label: 'GASTOS', color: 'blue' },
-              { id: 'income', label: 'INGRESOS', color: 'green' }
-            ]}
-          />
+        <Card className={`border-t-4 ${formData.type === 'expense' ? 'border-t-[#4E73DF]' : 'border-t-green-500'}`}>
+          <form className="space-y-4">
+            <div className="space-y-4">
+              <datalist id="business-names">
+                {uniqueBusinesses.map((name, index) => (
+                  <option key={index} value={name} />
+                ))}
+              </datalist>
 
-          <div className={`flex-1 flex flex-col gap-6 justify-center ${viewingContext.type === 'shared' ? 'opacity-50 pointer-events-none' : ''}`}>
-            <label className={`flex flex-col items-center justify-center h-48 bg-gradient-to-br ${activeTab === 'expense' ? 'from-blue-50 to-indigo-50 border-blue-200' : 'from-green-50 to-emerald-50 border-green-200'} border-2 border-dashed rounded-2xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all relative overflow-hidden group`}>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={(e) => {
-                  setCurrentInvoice(prev => ({ ...prev, type: activeTab }));
-                  handleFileUpload(e);
-                }}
-                className="hidden"
+              <Input
+                label="RNC"
+                name="rnc"
+                value={formData.rnc || ''}
+                onChange={handleChange}
+                onBlur={handleRncBlur}
               />
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                <div className={`bg-white p-4 rounded-full shadow-md mb-2 ${activeTab === 'expense' ? 'group-hover:bg-[#4E73DF]' : 'group-hover:bg-green-500'} group-hover:text-white transition-colors`}>
-                  <Camera size={32} className={`${activeTab === 'expense' ? 'text-[#4E73DF]' : 'text-green-500'} group-hover:text-white`} />
+              <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
+              <Input
+                label={formData.type === 'income' ? "Cliente / Fuente" : "Nombre Negocio"}
+                name="nombre_negocio"
+                value={formData.nombre_negocio || ''}
+                onChange={handleChange}
+                list="business-names"
+                placeholder="Escribe o selecciona..."
+              />
+              <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
+            </div>
+
+            <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
+              <div className="mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
+                  <input
+                    type="number"
+                    name="total"
+                    value={formData.total || ''}
+                    onChange={handleChange}
+                    className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500'}`}
+                    placeholder="0.00"
+                  />
                 </div>
-                <p className="font-bold text-gray-700">Usar Cámara</p>
               </div>
-            </label>
 
-            <div className="flex items-center justify-center gap-4">
-              <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
-            </div>
+              {/* Monto Neto Calculado */}
+              <div className="mb-4 flex justify-between items-center px-2">
+                <span className="text-sm font-medium text-gray-600">Monto Neto (Calc):</span>
+                <span className="font-bold text-gray-800">
+                  {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
+                </span>
+              </div>
 
-            <label className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  setCurrentInvoice(prev => ({ ...prev, type: activeTab }));
-                  handleFileUpload(e);
-                }}
-                className="hidden"
-              />
-              <Upload size={28} className="text-gray-400 mb-2" />
-              <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
-            </label>
-
-            <div className="flex items-center justify-center gap-4">
-              <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O</span><span className="h-px bg-gray-300 w-12"></span>
-            </div>
-
-            <button
-              onClick={() => {
-                setCurrentInvoice({ data: { fecha: new Date().toISOString().split('T')[0] }, type: activeTab });
-                setCurrentView('verify');
-              }}
-              className="w-full py-4 rounded-xl border-2 border-dashed border-gray-300 text-gray-500 font-medium hover:bg-gray-50 hover:border-gray-400 transition-all flex items-center justify-center gap-2"
-            >
-              <Keyboard size={24} />
-              Ingresar Manualmente
-            </button>
-          </div>
-          <div className="mt-auto pt-6"><Button variant="ghost" onClick={() => setCurrentView('dashboard')} className="w-full">Cancelar</Button></div>
-
-          {/* Error Message Display */}
-          {error && (
-            <div className="mx-4 mt-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl flex items-center gap-3 animate-fade-in">
-              <AlertCircle size={24} className="text-red-500 flex-shrink-0" />
-              <p className="text-sm font-medium">{error}</p>
-            </div>
-          )}
-
-          {loading && <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 flex flex-col items-center justify-center text-white"><Loader2 size={50} className="animate-spin mb-4 text-white" /><p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage}</p></div>}
-        </div>
-      );
-
-      const VerifyView = () => {
-        const [formData, setFormData] = useState(() => {
-          const data = currentInvoice.data || {};
-          return {
-            ...data,
-            ...data,
-            itbis18: data.itbis18 !== undefined ? data.itbis18 : data.itbis, // Map legacy itbis to itbis18
-            itbis16: data.itbis16 || '',
-            type: currentInvoice.type || data.type || 'expense'
-          };
-        });
-        const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
-
-        // Obtener nombres de negocios únicos para autocompletar
-        const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
-
-        const isManualEntry = !formData.id && !currentInvoice.file; // No ID y no archivo (imagen)
-
-        // Lógica para autocompletar nombre de negocio al perder foco en RNC
-        const handleRncBlur = () => {
-          if (formData.rnc) {
-            const foundInvoice = invoices.find(inv => inv.rnc === formData.rnc && inv.nombre_negocio);
-            if (foundInvoice) {
-              setFormData(prev => ({ ...prev, nombre_negocio: foundInvoice.nombre_negocio }));
-            }
-          }
-        };
-
-        return (
-          <div className="p-4 pb-24 animate-fade-in">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
-              {formData.id ? 'Editar Registro' : (isManualEntry ? `Registro Manual (${formData.type === 'income' ? 'Ingreso' : 'Gasto'})` : 'Validar Datos')}
-            </h2>
-
-            <TabSwitch
-              activeTab={formData.type}
-              onTabChange={(type) => setFormData(prev => ({ ...prev, type }))}
-              tabs={[
-                { id: 'expense', label: 'GASTOS', color: 'blue' },
-                { id: 'income', label: 'INGRESOS', color: 'green' }
-              ]}
-            />
-
-            <Card className={`border-t-4 ${formData.type === 'expense' ? 'border-t-[#4E73DF]' : 'border-t-green-500'}`}>
-              <form className="space-y-4">
-                <div className="space-y-4">
-                  <datalist id="business-names">
-                    {uniqueBusinesses.map((name, index) => (
-                      <option key={index} value={name} />
-                    ))}
-                  </datalist>
-
-                  <Input
-                    label="RNC"
-                    name="rnc"
-                    value={formData.rnc || ''}
-                    onChange={handleChange}
-                    onBlur={handleRncBlur}
-                  />
-                  <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
-                  <Input
-                    label={formData.type === 'income' ? "Cliente / Fuente" : "Nombre Negocio"}
-                    name="nombre_negocio"
-                    value={formData.nombre_negocio || ''}
-                    onChange={handleChange}
-                    list="business-names"
-                    placeholder="Escribe o selecciona..."
-                  />
-                  <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (18%)</label>
+                  <input type="number" name="itbis18" value={formData.itbis18 !== undefined ? formData.itbis18 : ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
                 </div>
-
-                <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
-                  <div className="mb-4">
-                    <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
-                    <div className="relative">
-                      <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
-                      <input
-                        type="number"
-                        name="total"
-                        value={formData.total || ''}
-                        onChange={handleChange}
-                        className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500'}`}
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Monto Neto Calculado */}
-                  <div className="mb-4 flex justify-between items-center px-2">
-                    <span className="text-sm font-medium text-gray-600">Monto Neto (Calc):</span>
-                    <span className="font-bold text-gray-800">
-                      {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (18%)</label>
-                      <input type="number" name="itbis18" value={formData.itbis18 !== undefined ? formData.itbis18 : ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (16%)</label>
-                      <input type="number" name="itbis16" value={formData.itbis16 || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
-                      <input type="number" name="propina" value={formData.propina || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                    </div>
-                  </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (16%)</label>
+                  <input type="number" name="itbis16" value={formData.itbis16 || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
+                  <input type="number" name="propina" value={formData.propina || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
+                </div>
+              </div>
+            </div>
 
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-                  <select name="categoria" value={formData.categoria || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <option value="">Seleccionar Categoría</option>
-                    {formData.type === 'expense' ? (
-                      <>
-                        <option value="Alimentación">Alimentación</option>
-                        <option value="Transporte">Transporte</option>
-                        <option value="Servicios">Servicios</option>
-                        <option value="Salud">Salud</option>
-                        <option value="Combustible">Combustible</option>
-                        <option value="Ocio">Ocio</option>
-                      </>
-                    ) : (
-                      <>
-                        <option value="Salario">Salario</option>
-                        <option value="Freelance">Freelance</option>
-                        <option value="Asesorías">Asesorías</option>
-                        <option value="Venta de Artículos">Venta de Artículos</option>
-                        <option value="Ventas varias">Ventas varias</option>
-                        <option value="Otros">Otros</option>
-                      </>
-                    )}
-                    <option value="Autocuidado">Autocuidado</option>
-                    <option value="Educación">Educación</option>
-                    <option value="Hogar">Hogar</option>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+              <select name="categoria" value={formData.categoria || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
+                <option value="">Seleccionar Categoría</option>
+                {formData.type === 'expense' ? (
+                  <>
+                    <option value="Alimentación">Alimentación</option>
+                    <option value="Transporte">Transporte</option>
+                    <option value="Servicios">Servicios</option>
+                    <option value="Salud">Salud</option>
+                    <option value="Combustible">Combustible</option>
+                    <option value="Ocio">Ocio</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="Salario">Salario</option>
+                    <option value="Freelance">Freelance</option>
+                    <option value="Asesorías">Asesorías</option>
+                    <option value="Venta de Artículos">Venta de Artículos</option>
+                    <option value="Ventas varias">Ventas varias</option>
                     <option value="Otros">Otros</option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Descripción (Opcional)</label>
-                  <textarea
-                    name="descripcion"
-                    value={formData.descripcion || ''}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
-                    placeholder="Detalles adicionales..."
-                  />
-                </div>
-
-                <div className="pt-4 flex flex-col gap-3">
-                  <div className="flex gap-3">
-                    {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
-                    {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
-                    <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
-                      {formData.id ? 'Actualizar' : 'Guardar'}
-                    </Button>
-                  </div>
-
-                  {formData.id && (
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteInvoice(formData.id)}
-                      className="w-full text-red-500 text-sm font-medium py-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
-                    >
-                      <Trash2 size={16} /> Eliminar Factura
-                    </button>
-                  )}
-                </div>
-              </form>
-            </Card>
-          </div>
-        );
-      };
-
-      if (loading && currentView === 'login') return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
-      if (currentView === 'login') return <LoginView />;
-      if (currentView === 'register') return <RegisterView />;
-      if (currentView === 'welcome') return <WelcomeView />;
-
-      return (
-        <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
-          <DuplicateModal
-            duplicateData={duplicateWarning}
-            onCancel={() => {
-              setDuplicateWarning(null);
-              setLoading(false);
-            }}
-            onViewExisting={(data) => {
-              setDuplicateWarning(null);
-              handleInvoiceClick(data);
-            }}
-          />
-
-          {deleteConfirmation && (
-            <DeleteConfirmationModal
-              onConfirm={confirmDelete}
-              onCancel={() => setDeleteConfirmation(null)}
-            />
-          )}
-
-          {viewingInvoice && (
-            <InvoiceDetailModal
-              invoice={viewingInvoice}
-              onClose={() => setViewingInvoice(null)}
-            />
-          )}
-
-          <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
-            <div className="flex items-center gap-2">
-              <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
-              <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
+                  </>
+                )}
+                <option value="Autocuidado">Autocuidado</option>
+                <option value="Educación">Educación</option>
+                <option value="Hogar">Hogar</option>
+                <option value="Otros">Otros</option>
+              </select>
             </div>
-          </header>
 
-          <main className="flex-1 overflow-y-auto scrollbar-hide">
-            {currentView === 'dashboard' && <DashboardView />}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción (Opcional)</label>
+              <textarea
+                name="descripcion"
+                value={formData.descripcion || ''}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
+                placeholder="Detalles adicionales..."
+              />
+            </div>
 
-            {currentView === 'history' && <HistoryView />}
-            {currentView === 'stats' && <StatsView />}
-            {currentView === 'scan' && <ScanView />}
-            {currentView === 'verify' && <VerifyView />}
-            {currentView === 'settings' && <SettingsView
-              viewingContext={viewingContext}
-              sharedAccounts={sharedAccounts}
-              handleSwitchAccount={handleSwitchAccount}
-              handleSwitchToPersonal={handleSwitchToPersonal}
-              exportToCSV={exportToCSV}
-              handleInviteCollaborator={handleInviteCollaborator}
-              onSignOut={() => { signOut(auth); setCurrentView('login'); }}
-              onUpdateProfile={handleUpdateProfile}
-              installPrompt={installPrompt}
-              onInstall={handleInstallClick}
-              myCollaborators={myCollaborators}
-              handleRevokeAccess={handleRevokeAccess}
-            />}
-          </main>
-
-          {/* Floating Install Banner */}
-          {installPrompt && !localStorage.getItem('pwa_dismissed') && (
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
-                <div className="flex-1">
-                  <p className="font-bold text-gray-900">Instalar FacturIA</p>
-                  <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
-                </div>
-                <button onClick={() => { setInstallPrompt(null); localStorage.setItem('pwa_dismissed', 'true'); }} className="text-gray-400 p-2"><XIcon size={20} /></button>
+            <div className="pt-4 flex flex-col gap-3">
+              <div className="flex gap-3">
+                {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
+                {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
+                <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
+                  {formData.id ? 'Actualizar' : 'Guardar'}
+                </Button>
               </div>
-              <Button onClick={handleInstallClick} className="w-full shadow-lg bg-[#4E73DF]">Instalar Ahora</Button>
-            </div>
-          )}
 
-          {/* Navigation Bar */}
-          <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
-            <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-              <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
-            </button>
-            <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-              <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
-            </button>
-            <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
-              <Camera size={24} />
-            </button>
-            <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-              <PieChart size={22} /><span className="text-[10px] font-bold mt-1">Stats</span>
-            </button>
-            <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
-              <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
-              {newCollabNotification && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
-            </button>
-          </nav>
+              {formData.id && (
+                <button
+                  type="button"
+                  onClick={() => handleDeleteInvoice(formData.id)}
+                  className="w-full text-red-500 text-sm font-medium py-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} /> Eliminar Factura
+                </button>
+              )}
+            </div>
+          </form>
+        </Card>
+      </div>
+    );
+  };
+
+  if (loading && currentView === 'login') return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
+  if (currentView === 'login') return <LoginView />;
+  if (currentView === 'register') return <RegisterView />;
+  if (currentView === 'welcome') return <WelcomeView />;
+
+  return (
+    <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
+      <DuplicateModal
+        duplicateData={duplicateWarning}
+        onCancel={() => {
+          setDuplicateWarning(null);
+          setLoading(false);
+        }}
+        onViewExisting={(data) => {
+          setDuplicateWarning(null);
+          handleInvoiceClick(data);
+        }}
+      />
+
+      {deleteConfirmation && (
+        <DeleteConfirmationModal
+          onConfirm={confirmDelete}
+          onCancel={() => setDeleteConfirmation(null)}
+        />
+      )}
+
+      {viewingInvoice && (
+        <InvoiceDetailModal
+          invoice={viewingInvoice}
+          onClose={() => setViewingInvoice(null)}
+        />
+      )}
+
+      <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
+        <div className="flex items-center gap-2">
+          <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
+          <span className={`font-bold text-xl tracking-tight ${viewingContext.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
         </div>
-      );
-    }
+      </header>
+
+      <main className="flex-1 overflow-y-auto scrollbar-hide">
+        {currentView === 'dashboard' && <DashboardView />}
+
+        {currentView === 'history' && <HistoryView />}
+        {currentView === 'stats' && <StatsView />}
+        {currentView === 'scan' && <ScanView />}
+        {currentView === 'verify' && <VerifyView />}
+        {currentView === 'settings' && <SettingsView
+          viewingContext={viewingContext}
+          sharedAccounts={sharedAccounts}
+          handleSwitchAccount={handleSwitchAccount}
+          handleSwitchToPersonal={handleSwitchToPersonal}
+          exportToCSV={exportToCSV}
+          handleInviteCollaborator={handleInviteCollaborator}
+          onSignOut={() => { signOut(auth); setCurrentView('login'); }}
+          onUpdateProfile={handleUpdateProfile}
+          installPrompt={installPrompt}
+          onInstall={handleInstallClick}
+          myCollaborators={myCollaborators}
+          handleRevokeAccess={handleRevokeAccess}
+        />}
+      </main>
+
+      {/* Floating Install Banner */}
+      {installPrompt && !localStorage.getItem('pwa_dismissed') && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 shadow-2xl z-50 animate-slide-up flex flex-col gap-3">
+          <div className="flex items-center gap-3">
+            <div className="bg-[#4E73DF] p-2 rounded-xl text-white"><Download size={24} /></div>
+            <div className="flex-1">
+              <p className="font-bold text-gray-900">Instalar FacturIA</p>
+              <p className="text-xs text-gray-500">Agrega la app a tu inicio para un acceso más rápido y uso sin conexión.</p>
+            </div>
+            <button onClick={() => { setInstallPrompt(null); localStorage.setItem('pwa_dismissed', 'true'); }} className="text-gray-400 p-2"><XIcon size={20} /></button>
+          </div>
+          <Button onClick={handleInstallClick} className="w-full shadow-lg bg-[#4E73DF]">Instalar Ahora</Button>
+        </div>
+      )}
+
+      {/* Navigation Bar */}
+      <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
+        <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+          <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
+        </button>
+        <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+          <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
+        </button>
+        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
+          <Camera size={24} />
+        </button>
+        <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+          <PieChart size={22} /><span className="text-[10px] font-bold mt-1">Stats</span>
+        </button>
+        <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+          <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
+          {newCollabNotification && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
+        </button>
+      </nav>
+    </div>
+  );
+}
