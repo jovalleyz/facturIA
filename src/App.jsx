@@ -929,7 +929,7 @@ export default function App() {
         }
       }
 
-      setCurrentInvoice({ image: base64Image, data: parsedData });
+      setCurrentInvoice(prev => ({ ...prev, image: base64Image, data: parsedData }));
       setCurrentView('verify');
     } catch (err) {
       console.error("Backend API Error:", err);
@@ -1494,8 +1494,8 @@ export default function App() {
       const isUSD = data.moneda === 'USD';
       return {
         ...data,
-        itbis18: data.itbis18 !== undefined ? data.itbis18 : data.itbis, // Map legacy itbis to itbis18
-        itbis16: data.itbis16 || '',
+        itbis18: isUSD && data.tasa_cambio ? ((data.itbis18 || data.itbis || 0) * data.tasa_cambio).toFixed(2) : (data.itbis18 !== undefined ? data.itbis18 : data.itbis),
+        itbis16: isUSD && data.tasa_cambio ? ((data.itbis16 || 0) * data.tasa_cambio).toFixed(2) : (data.itbis16 || ''),
         type: currentInvoice.type || data.type || 'expense',
         moneda: data.moneda || 'DOP',
         tasa_cambio: data.tasa_cambio || '',
@@ -1532,7 +1532,8 @@ export default function App() {
     // Obtener nombres de negocios únicos para autocompletar
     const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
 
-    const isManualEntry = !formData.id && !currentInvoice.file; // No ID y no archivo (imagen)
+    const isCaptured = !!(currentInvoice.file || currentInvoice.image);
+    const isManualEntry = !formData.id && !isCaptured;
 
     // Lógica para autocompletar nombre de negocio al perder foco en RNC
     const handleRncBlur = () => {
@@ -1547,7 +1548,7 @@ export default function App() {
     return (
       <div className="p-4 pb-24 animate-fade-in">
         <h2 className="text-xl font-bold text-gray-900 mb-4">
-          {formData.id ? 'Editar Registro' : (isManualEntry ? `Registro Manual (${formData.type === 'income' ? 'Ingreso' : 'Gasto'})` : 'Validar Datos')}
+          {formData.id ? 'Editar Registro' : (isCaptured ? 'Datos Capturados' : `Registro Manual (${formData.type === 'income' ? 'Ingreso' : 'Gasto'})`)}
         </h2>
 
         <TabSwitch
@@ -1640,7 +1641,7 @@ export default function App() {
               )}
 
               <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">{formData.moneda === 'USD' ? 'Monto en Pesos (Calc)' : 'Monto Total'}</label>
+                <label className="block text-sm font-bold text-gray-700 mb-1">{formData.moneda === 'USD' ? 'Monto en Pesos' : 'Monto Total'}</label>
                 <div className="relative">
                   <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
                   <input
@@ -1657,7 +1658,7 @@ export default function App() {
 
               {/* Monto Neto Calculado */}
               <div className="mb-4 flex justify-between items-center px-2">
-                <span className="text-sm font-medium text-gray-600">Monto Neto (Calc):</span>
+                <span className="text-sm font-medium text-gray-600">Monto Neto:</span>
                 <span className="font-bold text-gray-800">
                   {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
                 </span>

@@ -43,8 +43,9 @@ export default async function handler(req, res) {
         if (type === 'income') {
             prompt = `Analiza este texto de un comprobante de ingreso o factura de venta emitida por "OVM Consulting".
              IMPORTANTE: El campo 'nombre_negocio' DEBE ser el nombre del CLIENTE a quien se le factura, NO "OVM Consulting".
+             IMPORTANTE: Ignora los RNC "131932037", "131-93203-7" o similares que correspondan a OVM Consulting. Busca el RNC del CLIENTE.
              Extrae en JSON puro: 
-             rnc (del CLIENTE si aparece, NO de OVM Consulting), 
+             rnc (del CLIENTE si aparece, NO de OVM Consulting ni 131932037), 
              ncf (si aplica), 
              fecha (YYYY-MM-DD), 
              nombre_negocio (Nombre del CLIENTE o Fuente del Ingreso. Ignora "OVM Consulting"), 
