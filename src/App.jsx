@@ -318,7 +318,10 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
 
             {invoice.moneda === 'USD' && invoice.original_total && (
               <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
-                <p className="text-[10px] font-bold text-gray-400 mb-2 uppercase tracking-wider">Detalles Originales (USD)</p>
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Detalles Originales (USD)</p>
+                  <p className="text-[10px] font-medium text-gray-400">Tasa: {invoice.tasa_cambio}</p>
+                </div>
                 <div className="space-y-1 text-xs text-gray-500">
                   <div className="flex justify-between">
                     <span>Monto Neto:</span>
