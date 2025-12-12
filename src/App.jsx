@@ -819,7 +819,8 @@ export default function App() {
       return;
     }
 
-    const headers = ["Tipo", "Fecha", "Nombre Negocio/Cliente", "RNC", "NCF", "Categoría", "Descripción", "Monto Neto", "ITBIS (18%)", "ITBIS (16%)", "Propina", "Monto Total"];
+    // --- SECCIÓN PRINCIPAL (CONVERTIDO A DOP) ---
+    const headers = ["Tipo", "Fecha", "Nombre Negocio/Cliente", "RNC", "NCF", "Categoría", "Descripción", "Monto Neto (DOP)", "ITBIS 18% (DOP)", "ITBIS 16% (DOP)", "Propina (DOP)", "Monto Total (DOP)"];
     const rows = dataToExport.map(inv => {
       const total = parseFloat(inv.total || 0);
       const itbis18 = parseFloat(inv.itbis18 || inv.itbis || 0);
@@ -830,7 +831,7 @@ export default function App() {
       return [
         inv.type === 'income' ? 'Ingreso' : 'Gasto',
         inv.fecha || "",
-        `"${(inv.nombre_negocio || "").replace(/"/g, '""')}"`, // Escapar comillas dobles
+        `"${(inv.nombre_negocio || "").replace(/"/g, '""')}"`,
         inv.rnc || "",
         inv.ncf || "",
         inv.categoria || "",
@@ -842,8 +843,38 @@ export default function App() {
         total.toFixed(2)
       ];
     });
+    let csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
 
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+    // --- SECCIÓN SECUNDARIA (SOLO USD) ---
+    const usdInvoices = dataToExport.filter(inv => inv.moneda === 'USD');
+
+    if (usdInvoices.length > 0) {
+      csvContent += "\n\n"; // Espacio entre secciones
+      csvContent += "DETALLE DE OPERACIONES EN DÓLARES (USD)\n";
+
+      const usdHeaders = ["Tipo", "Fecha", "Nombre Negocio/Cliente", "RNC", "NCF", "Categoría", "Tasa de Cambio", "Monto Original (USD)", "ITBIS (USD)", "Monto Convertido Total (DOP)"];
+      const usdRows = usdInvoices.map(inv => {
+        const originalTotal = parseFloat(inv.original_total || 0);
+        const tasa = parseFloat(inv.tasa_cambio || 0);
+        const totalDop = parseFloat(inv.total || 0);
+
+        return [
+          inv.type === 'income' ? 'Ingreso' : 'Gasto',
+          inv.fecha || "",
+          `"${(inv.nombre_negocio || "").replace(/"/g, '""')}"`,
+          inv.rnc || "",
+          inv.ncf || "",
+          inv.categoria || "",
+          tasa.toFixed(2),
+          originalTotal.toFixed(2),
+          ((parseFloat(inv.itbis18 || inv.itbis || 0) + parseFloat(inv.itbis16 || 0)) / (tasa || 1)).toFixed(2),
+          totalDop.toFixed(2)
+        ];
+      });
+
+      csvContent += [usdHeaders.join(","), ...usdRows.map(r => r.join(","))].join("\n");
+    }
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -854,7 +885,6 @@ export default function App() {
     document.body.removeChild(link);
   };
 
-  // --- RESIZING LOGIC START ---
   // --- RESIZING LOGIC START ---
   const resizeImage = (file, maxWidth = 1024) => {
     return new Promise((resolve) => {
