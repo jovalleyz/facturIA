@@ -40,21 +40,24 @@ export default async function handler(req, res) {
         const MODEL_ID = 'gemini-2.5-flash-lite';
 
         let prompt;
+        const RNC_BLOCKLIST = '131932037, 131-93203-7, 131932037, 131-93203-7';
+        const NAME_BLOCKLIST = '"OVM CONSULTING", "OVALLEY & EMPULSO", "OVALLEY & EMPULSO PROFESSIONAL CONSULTANTS"';
+
         if (type === 'income') {
-            prompt = `Analiza este documento. Es una FACTURA DE INGRESO emitida por "OVM CONSULTING" (RNC 131-93203-7).
+            prompt = `Analiza este documento. Es una FACTURA DE INGRESO.
              TU OBJETIVO: Extraer los datos del CLIENTE a quien se le factura.
-             
+
              REGLAS CRÍTICAS DE EXTRACCIÓN:
              1. BUSCA EL CAMPO "CLIENTE:" o "FACTURADO A:". El valor que sigue es el 'nombre_negocio'.
-             2. PROHIBIDO: NUNCA uses "OVM CONSULTING", "OVALLEY & EMPULSO", "OVALLEY & EMPULSO PROFESSIONAL CONSULTANTS" ni sus variaciones como 'nombre_negocio'.
-             3. PROHIBIDO: NUNCA uses el RNC "131932037" o "131-93203-7" como 'rnc'. Ese es el emisor. Busca el RNC del CLIENTE.
+             2. PROHIBIDO: NUNCA uses ${NAME_BLOCKLIST} ni sus variaciones como 'nombre_negocio'.
+             3. PROHIBIDO: NUNCA uses el RNC "131932037" o sus formatos como 'rnc'. Ese es el RNC de OVM. Busca el RNC del CLIENTE.
              4. Si no encuentras un cliente distinto al emisor, devuelve null en 'nombre_negocio' y 'rnc'.
 
              Extrae en JSON puro: 
-             rnc (del CLIENTE, ejemplo: 130-83571-3), 
+             rnc (del CLIENTE), 
              ncf (ej: B0100000154), 
              fecha (YYYY-MM-DD), 
-             nombre_negocio (El nombre del CLIENTE. Ej: ORION INVESTMENT GROUP INC), 
+             nombre_negocio (El nombre del CLIENTE), 
              moneda (Detectar si es "DOP" o "USD"),
              total (número), 
              itbis18 (número, impuesto facturado), 
@@ -65,7 +68,29 @@ export default async function handler(req, res) {
              Texto:
              ${fullText}`;
         } else {
-            prompt = `Analiza este texto extraído de una factura de gasto dominicana. Extrae en JSON puro: rnc, ncf, fecha (YYYY-MM-DD), nombre_negocio, moneda (Detectar si es "DOP" o "USD"), total (número), itbis18 (número, por defecto el 18% va aquí), itbis16 (número, si explícitamente es 16%), propina (número), categoria.
+            prompt = `Analiza este texto extraído de una factura de gasto dominicana.
+             TU OBJETIVO: Extraer los datos del PROVEEDOR que emite la factura.
+
+             REGLAS DE PROPINA (LEY REP. DOM):
+             1. Busca términos como "10% Ley", "10%", "Propina", "%LEY", "%Ley".
+             2. Si existe, asígnalo al campo 'propina'.
+             3. VALIDACIÓN: La propina debe ser estrictamente el 10% del monto neto (Subtotal). Total = Neto + ITBIS + Propina.
+             
+             REGLAS DE EXCLUSIÓN (OVM):
+             1. El RNC "131932037" (OVM Consulting) NO es el proveedor. NO lo captures como 'rnc'.
+             2. Busca el RNC del negocio que emitió la factura.
+             
+             Extrae en JSON puro: 
+             rnc (del PROVEEDOR, ignora ${RNC_BLOCKLIST}), 
+             ncf, 
+             fecha (YYYY-MM-DD), 
+             nombre_negocio (El que vende), 
+             moneda (Detectar si es "DOP" o "USD"), 
+             total (número), 
+             itbis18 (número, por defecto el 18% va aquí), 
+             itbis16 (número, si explícitamente es 16%), 
+             propina (número, validar 10% ley), 
+             categoria.
              Texto:
              ${fullText}`;
         }

@@ -57,7 +57,12 @@ import {
   Eye,
   Keyboard,
   AlertCircle,
-  Trash2
+  Trash2,
+  Shield,
+  Building2,
+  Phone,
+  MapPin,
+  ChevronLeft
 } from 'lucide-react';
 
 /**
@@ -380,6 +385,106 @@ const DeleteConfirmationModal = ({ onConfirm, onCancel }) => {
   );
 };
 
+const CompanyInfoModal = ({ companies, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  if (!companies || companies.length === 0) return null;
+
+  const currentCompany = companies[currentIndex];
+
+  const nextCompany = () => {
+    setCurrentIndex((prev) => (prev + 1) % companies.length);
+  };
+
+  const prevCompany = () => {
+    setCurrentIndex((prev) => (prev - 1 + companies.length) % companies.length);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        {/* Header con gradiente */}
+        <div className="bg-gradient-to-r from-[#4E73DF] to-[#224abe] p-6 pb-8 relative overflow-hidden text-white">
+          {/* Fondo decorativo */}
+          <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12">
+            <Building2 size={100} />
+          </div>
+
+          <div className="relative z-10">
+            <h3 className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1 flex items-center gap-2">
+              <Shield size={14} /> Información de Empresa
+            </h3>
+            <h2 className="text-2xl font-bold leading-tight">{currentCompany.name}</h2>
+          </div>
+
+          <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1 transition-all backdrop-blur-sm">
+            <XIcon size={20} />
+          </button>
+        </div>
+
+        <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-20">
+          <div className="space-y-6">
+
+            {/* RNC Feature Row */}
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
+                <FileText size={24} />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">RNC</p>
+                <p className="text-3xl font-bold text-gray-800 tracking-tight">{currentCompany.rnc}</p>
+              </div>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full h-px bg-gray-100"></div>
+
+            {/* Other Rows */}
+            <div className="space-y-5">
+              {currentCompany.phone && (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                    <Phone size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Teléfono</p>
+                    <p className="text-lg font-medium text-gray-800">{currentCompany.phone}</p>
+                  </div>
+                </div>
+              )}
+              {currentCompany.address && (
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                    <MapPin size={22} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Dirección</p>
+                    <p className="text-sm font-medium text-gray-800 leading-snug">{currentCompany.address}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {companies.length > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+              <button onClick={prevCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                <ChevronLeft size={20} />
+              </button>
+              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                {currentIndex + 1} / {companies.length}
+              </span>
+              <button onClick={nextCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                <ChevronRight size={20} />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES EXTERNOS ---
 
 const SettingsView = ({
@@ -394,12 +499,29 @@ const SettingsView = ({
   installPrompt,
   onInstall,
   myCollaborators,
-  handleRevokeAccess
+  handleRevokeAccess,
+  // New props for company management
+  userCompanies,
+  onAddCompany,
+  onDeleteCompany
 }) => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editName, setEditName] = useState(viewingContext.name || '');
   const [editPhoto, setEditPhoto] = useState(null);
+
+  // Stats for Add Company Form
+  const [newCompany, setNewCompany] = useState({ name: '', rnc: '', phone: '', address: '' });
+  const [showAddCompany, setShowAddCompany] = useState(false);
+
+  const handleAddCompanySubmit = (e) => {
+    e.preventDefault();
+    if (!newCompany.name || !newCompany.rnc) return alert("Nombre y RNC requeridos");
+    onAddCompany(newCompany);
+    setNewCompany({ name: '', rnc: '', phone: '', address: '' });
+    setShowAddCompany(false);
+  };
+
 
   useEffect(() => {
     setEditName(viewingContext.name || '');
@@ -559,6 +681,79 @@ const SettingsView = ({
         )}
       </div>
 
+      <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm mb-6 mt-4">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="font-bold text-gray-800 flex items-center gap-2 text-sm">
+            <Building2 size={16} /> Mis Empresas
+          </h3>
+          <button
+            onClick={() => setShowAddCompany(!showAddCompany)}
+            className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors"
+          >
+            {showAddCompany ? 'Cancelar' : '+ Nueva'}
+          </button>
+        </div>
+
+        {showAddCompany && (
+          <form onSubmit={handleAddCompanySubmit} className="mb-4 bg-gray-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
+            <div className="space-y-3">
+              <input
+                type="text"
+                placeholder="Razón Social (Nombre)"
+                value={newCompany.name}
+                onChange={e => setNewCompany({ ...newCompany, name: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
+                required
+              />
+              <input
+                type="text"
+                placeholder="RNC"
+                value={newCompany.rnc}
+                onChange={e => setNewCompany({ ...newCompany, rnc: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Teléfono (Opcional)"
+                value={newCompany.phone}
+                onChange={e => setNewCompany({ ...newCompany, phone: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
+              />
+              <input
+                type="text"
+                placeholder="Dirección (Opcional)"
+                value={newCompany.address}
+                onChange={e => setNewCompany({ ...newCompany, address: e.target.value })}
+                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
+              />
+              <Button type="submit" className="w-full py-2 text-sm shadow-none">Guardar Empresa</Button>
+            </div>
+          </form>
+        )}
+
+        <div className="space-y-2">
+          {userCompanies && userCompanies.length > 0 ? (
+            userCompanies.map(comp => (
+              <div key={comp.id} className="p-3 border border-gray-100 rounded-lg flex justify-between items-center hover:bg-gray-50 transition-colors">
+                <div>
+                  <p className="font-bold text-gray-800 text-sm">{comp.name}</p>
+                  <p className="text-xs text-gray-500 font-mono">RNC: {comp.rnc}</p>
+                </div>
+                <button
+                  onClick={() => onDeleteCompany(comp.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))
+          ) : (
+            <p className="text-center text-xs text-gray-400 py-2 italic">No tienes empresas registradas.</p>
+          )}
+        </div>
+      </div>
+
       <div className="mt-8"><Button variant="danger" onClick={onSignOut} className="w-full"><LogOut size={18} className="mr-2" /> Cerrar Sesión</Button></div>
     </div>
   );
@@ -576,6 +771,9 @@ export default function App() {
   const [viewingContext, setViewingContext] = useState(null);
   const [sharedAccounts, setSharedAccounts] = useState([]);
   const [myCollaborators, setMyCollaborators] = useState([]);
+
+  const [userCompanies, setUserCompanies] = useState([]);
+  const [showCompanyModal, setShowCompanyModal] = useState(false);
 
   const [currentInvoice, setCurrentInvoice] = useState({ image: null, data: null });
   const [invoices, setInvoices] = useState([]);
@@ -648,7 +846,10 @@ export default function App() {
           await Promise.all([
             fetchInvoices(currentUser.uid),
             fetchCollaborations(currentUser.email),
-            fetchMyCollaborators(currentUser.uid)
+            fetchInvoices(currentUser.uid),
+            fetchCollaborations(currentUser.email),
+            fetchMyCollaborators(currentUser.uid),
+            fetchUserCompanies(currentUser.uid)
           ]);
         } catch (error) {
           console.error("Error loading initial data:", error);
@@ -760,6 +961,58 @@ export default function App() {
     } catch (err) {
       console.error("Error revoking access:", err);
       alert("Error al revocar acceso");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const [notification, setNotification] = useState(null);
+
+  const fetchUserCompanies = async (uid) => {
+    try {
+      // Removed orderBy to avoid missing index issues on Firestore for now
+      const q = query(collection(db, "user_companies"), where("userId", "==", uid));
+      const querySnapshot = await getDocs(q);
+      const comps = [];
+      querySnapshot.forEach((doc) => {
+        comps.push({ id: doc.id, ...doc.data() });
+      });
+      setUserCompanies(comps);
+    } catch (err) {
+      console.error("Error fetching companies:", err);
+    }
+  };
+
+  const handleAddCompany = async (companyData) => {
+    setLoading(true);
+    setLoadingMessage('Guardando empresa...');
+    try {
+      await addDoc(collection(db, "user_companies"), {
+        userId: user.uid,
+        ...companyData,
+        createdAt: serverTimestamp()
+      });
+      await fetchUserCompanies(user.uid);
+      setNotification({ type: 'success', message: 'Empresa agregada correctamente' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err) {
+      console.error("Error adding company:", err);
+      setNotification({ type: 'error', message: 'Error al agregar empresa' });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setLoading(false);
+      setLoadingMessage('Cargando...');
+    }
+  };
+
+  const handleDeleteCompany = async (companyId) => {
+    if (!confirm("¿Eliminar esta empresa?")) return;
+    setLoading(true);
+    try {
+      await deleteDoc(doc(db, "user_companies", companyId));
+      await fetchUserCompanies(user.uid);
+    } catch (err) {
+      console.error("Error deleting company:", err);
     } finally {
       setLoading(false);
     }
@@ -1338,14 +1591,34 @@ export default function App() {
           </button>
         </div>
 
-        <TabSwitch
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          tabs={[
-            { id: 'expense', label: 'GASTOS', color: 'blue' },
-            { id: 'income', label: 'INGRESOS', color: 'green' }
-          ]}
-        />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="flex-1">
+            <TabSwitch
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              tabs={[
+                { id: 'expense', label: 'GASTOS', color: 'blue' },
+                { id: 'income', label: 'INGRESOS', color: 'green' }
+              ]}
+            />
+          </div>
+          {userCompanies.length > 0 && (
+            <button
+              onClick={() => setShowCompanyModal(true)}
+              className="h-10 w-10 bg-white rounded-xl shadow-sm border border-gray-200 text-[#4E73DF] hover:bg-blue-50 flex items-center justify-center transition-all mb-4"
+              title="Mis Empresas"
+            >
+              <Shield size={20} />
+            </button>
+          )}
+        </div>
+
+        {showCompanyModal && (
+          <CompanyInfoModal
+            companies={userCompanies}
+            onClose={() => setShowCompanyModal(false)}
+          />
+        )}
 
         <Card className={`relative text-white border-none shadow-xl overflow-hidden ${activeTab === 'expense' ? 'bg-gradient-to-r from-[#4E73DF] to-[#224abe]' : 'bg-gradient-to-r from-green-500 to-emerald-600'}`}>
           {/* Fondo decorativo con iconos */}
@@ -1861,7 +2134,7 @@ export default function App() {
           sharedAccounts={sharedAccounts}
           handleSwitchAccount={handleSwitchAccount}
           handleSwitchToPersonal={handleSwitchToPersonal}
-          exportToCSV={exportToCSV}
+          exportToCSV={() => exportToCSV('all')}
           handleInviteCollaborator={handleInviteCollaborator}
           onSignOut={() => { signOut(auth); setCurrentView('login'); }}
           onUpdateProfile={handleUpdateProfile}
@@ -1869,8 +2142,19 @@ export default function App() {
           onInstall={handleInstallClick}
           myCollaborators={myCollaborators}
           handleRevokeAccess={handleRevokeAccess}
+          userCompanies={userCompanies}
+          onAddCompany={handleAddCompany}
+          onDeleteCompany={handleDeleteCompany}
         />}
       </main>
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 left-4 right-4 z-[100] p-4 rounded-xl shadow-2xl flex items-center gap-3 animate-slide-down ${notification.type === 'error' ? 'bg-red-500 text-white' : 'bg-green-500 text-white'}`}>
+          {notification.type === 'error' ? <AlertCircle size={24} /> : <Check size={24} />}
+          <p className="font-bold text-sm">{notification.message}</p>
+        </div>
+      )}
 
       {/* Floating Install Banner */}
       {installPrompt && !localStorage.getItem('pwa_dismissed') && (
