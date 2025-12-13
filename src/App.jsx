@@ -360,7 +360,7 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
   );
 };
 
-const DeleteConfirmationModal = ({ onConfirm, onCancel }) => {
+const DeleteConfirmationModal = ({ onConfirm, onCancel, title = "¿Eliminar Factura?", description = "Esta acción no se puede deshacer." }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
@@ -368,8 +368,8 @@ const DeleteConfirmationModal = ({ onConfirm, onCancel }) => {
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3 text-red-500">
             <Trash2 size={32} />
           </div>
-          <h3 className="text-xl font-bold text-gray-800">¿Eliminar Factura?</h3>
-          <p className="text-sm text-gray-500 mt-1">Esta acción no se puede deshacer.</p>
+          <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{description}</p>
         </div>
 
         <div className="p-6 flex gap-3">
@@ -406,7 +406,7 @@ const CompanyInfoModal = ({ companies, onClose }) => {
         {/* Header con gradiente */}
         <div className="bg-gradient-to-r from-[#4E73DF] to-[#224abe] p-6 pb-8 relative overflow-hidden text-white">
           {/* Fondo decorativo */}
-          <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12">
+          <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12 pointer-events-none">
             <Building2 size={100} />
           </div>
 
@@ -417,7 +417,7 @@ const CompanyInfoModal = ({ companies, onClose }) => {
             <h2 className="text-2xl font-bold leading-tight">{currentCompany.name}</h2>
           </div>
 
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-1 transition-all backdrop-blur-sm">
+          <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all backdrop-blur-sm z-50">
             <XIcon size={20} />
           </button>
         </div>
@@ -503,7 +503,9 @@ const SettingsView = ({
   // New props for company management
   userCompanies,
   onAddCompany,
-  onDeleteCompany
+  onDeleteCompany,
+  onUpdateCompany,
+  onSeedOVM
 }) => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [isEditing, setIsEditing] = useState(false);
@@ -513,12 +515,36 @@ const SettingsView = ({
   // Stats for Add Company Form
   const [newCompany, setNewCompany] = useState({ name: '', rnc: '', phone: '', address: '' });
   const [showAddCompany, setShowAddCompany] = useState(false);
+  const [editingCompanyId, setEditingCompanyId] = useState(null);
 
   const handleAddCompanySubmit = (e) => {
     e.preventDefault();
     if (!newCompany.name || !newCompany.rnc) return alert("Nombre y RNC requeridos");
-    onAddCompany(newCompany);
+
+    if (editingCompanyId) {
+      onUpdateCompany(editingCompanyId, newCompany);
+      setEditingCompanyId(null);
+    } else {
+      onAddCompany(newCompany);
+    }
     setNewCompany({ name: '', rnc: '', phone: '', address: '' });
+    setShowAddCompany(false);
+  };
+
+  const handleEditClick = (company) => {
+    setNewCompany({
+      name: company.name,
+      rnc: company.rnc,
+      phone: company.phone || '',
+      address: company.address || ''
+    });
+    setEditingCompanyId(company.id);
+    setShowAddCompany(true);
+  };
+
+  const handleCancelEdit = () => {
+    setNewCompany({ name: '', rnc: '', phone: '', address: '' });
+    setEditingCompanyId(null);
     setShowAddCompany(false);
   };
 
@@ -687,7 +713,7 @@ const SettingsView = ({
             <Building2 size={16} /> Mis Empresas
           </h3>
           <button
-            onClick={() => setShowAddCompany(!showAddCompany)}
+            onClick={showAddCompany ? handleCancelEdit : () => setShowAddCompany(true)}
             className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors"
           >
             {showAddCompany ? 'Cancelar' : '+ Nueva'}
@@ -727,7 +753,7 @@ const SettingsView = ({
                 onChange={e => setNewCompany({ ...newCompany, address: e.target.value })}
                 className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
               />
-              <Button type="submit" className="w-full py-2 text-sm shadow-none">Guardar Empresa</Button>
+              <Button type="submit" className="w-full py-2 text-sm shadow-none">{editingCompanyId ? 'Actualizar Empresa' : 'Guardar Empresa'}</Button>
             </div>
           </form>
         )}
@@ -740,22 +766,39 @@ const SettingsView = ({
                   <p className="font-bold text-gray-800 text-sm">{comp.name}</p>
                   <p className="text-xs text-gray-500 font-mono">RNC: {comp.rnc}</p>
                 </div>
-                <button
-                  onClick={() => onDeleteCompany(comp.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 size={16} />
-                </button>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handleEditClick(comp)}
+                    className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
+                  >
+                    <Edit2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => onDeleteCompany(comp.id)}
+                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
               </div>
             ))
           ) : (
             <p className="text-center text-xs text-gray-400 py-2 italic">No tienes empresas registradas.</p>
           )}
         </div>
+
+
+        {/* Temporary Seed Button */}
+        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
+          <button onClick={onSeedOVM} className="text-xs text-blue-400 hover:text-blue-600 underline">
+            Sincronizar OVM en cuentas vinculadas
+          </button>
+        </div>
       </div>
 
       <div className="mt-8"><Button variant="danger" onClick={onSignOut} className="w-full"><LogOut size={18} className="mr-2" /> Cerrar Sesión</Button></div>
-    </div>
+    </div >
   );
 };
 
@@ -785,6 +828,7 @@ export default function App() {
   const [viewingInvoice, setViewingInvoice] = useState(null); // Lifted state for modal
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState(null); // ID de la factura a eliminar
+  const [companyToDelete, setCompanyToDelete] = useState(null); // ID de la empresa a eliminar
   const [installPrompt, setInstallPrompt] = useState(null);
   useEffect(() => {
     const handler = (e) => {
@@ -1005,16 +1049,85 @@ export default function App() {
     }
   };
 
-  const handleDeleteCompany = async (companyId) => {
-    if (!confirm("¿Eliminar esta empresa?")) return;
+  const handleUpdateCompany = async (companyId, companyData) => {
     setLoading(true);
+    setLoadingMessage('Actualizando empresa...');
     try {
-      await deleteDoc(doc(db, "user_companies", companyId));
+      await updateDoc(doc(db, "user_companies", companyId), {
+        ...companyData,
+        updatedAt: serverTimestamp()
+      });
       await fetchUserCompanies(user.uid);
+      setNotification({ type: 'success', message: 'Empresa actualizada' });
+      setTimeout(() => setNotification(null), 3000);
     } catch (err) {
-      console.error("Error deleting company:", err);
+      console.error("Error updating company:", err);
+      setNotification({ type: 'error', message: 'Error al actualizar' });
+      setTimeout(() => setNotification(null), 3000);
     } finally {
       setLoading(false);
+      setLoadingMessage('Cargando...');
+    }
+  };
+
+  const handleDeleteCompany = async (companyId) => {
+    setCompanyToDelete(companyId);
+  };
+
+  const confirmDeleteCompany = async () => {
+    if (!companyToDelete) return;
+    setCompanyToDelete(null);
+    setLoading(true);
+    setLoadingMessage('Eliminando empresa...');
+    try {
+      await deleteDoc(doc(db, "user_companies", companyToDelete));
+      await fetchUserCompanies(user.uid);
+      setNotification({ type: 'success', message: 'Empresa eliminada' });
+      setTimeout(() => setNotification(null), 3000);
+    } catch (err) {
+      console.error("Error deleting company:", err);
+      setNotification({ type: 'error', message: 'Error al eliminar empresa' });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setLoading(false);
+      setLoadingMessage('Cargando...');
+    }
+  };
+
+  const handleSeedOVM = async () => {
+    const targets = ["Franklin Rosario Aquino", "Didy Vanessa Encarnación"];
+    const companyData = { name: "OVM Consulting", rnc: "131932037", phone: "", address: "" };
+    setLoading(true);
+    setLoadingMessage('Sincronizando empresas...');
+    try {
+      let count = 0;
+      for (const account of sharedAccounts) {
+        if (targets.includes(account.ownerName)) {
+          const q = query(
+            collection(db, "user_companies"),
+            where("userId", "==", account.ownerUid),
+            where("rnc", "==", companyData.rnc)
+          );
+          const snapshot = await getDocs(q);
+          if (snapshot.empty) {
+            await addDoc(collection(db, "user_companies"), {
+              userId: account.ownerUid,
+              ...companyData,
+              createdAt: serverTimestamp()
+            });
+            count++;
+          }
+        }
+      }
+      setNotification({ type: 'success', message: count > 0 ? `Se agregó OVM a ${count} cuentas.` : 'Todas las cuentas ya tienen OVM.' });
+      setTimeout(() => setNotification(null), 4000);
+    } catch (e) {
+      console.error("Error seeding OVM:", e);
+      setNotification({ type: 'error', message: 'Error al sincronizar' });
+      setTimeout(() => setNotification(null), 3000);
+    } finally {
+      setLoading(false);
+      setLoadingMessage('Cargando...');
     }
   };
 
@@ -2108,6 +2221,15 @@ export default function App() {
         />
       )}
 
+      {companyToDelete && (
+        <DeleteConfirmationModal
+          title="¿Eliminar Empresa?"
+          description="¿Está seguro que desea eliminar esta empresa?"
+          onConfirm={confirmDeleteCompany}
+          onCancel={() => setCompanyToDelete(null)}
+        />
+      )}
+
       {viewingInvoice && (
         <InvoiceDetailModal
           invoice={viewingInvoice}
@@ -2145,6 +2267,8 @@ export default function App() {
           userCompanies={userCompanies}
           onAddCompany={handleAddCompany}
           onDeleteCompany={handleDeleteCompany}
+          onUpdateCompany={handleUpdateCompany}
+          onSeedOVM={handleSeedOVM}
         />}
       </main>
 
