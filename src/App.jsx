@@ -65,6 +65,8 @@ import {
   ChevronLeft
 } from 'lucide-react';
 
+import { scanQRCode } from './utils/qrScanner';
+
 /**
  * CONFIGURACIÓN Y CREDENCIALES
  */
@@ -1291,11 +1293,13 @@ export default function App() {
 
       // Resize image before processing to save tokens/costs
       const resizedBase64 = await resizeImage(file);
-
       const fileUrl = URL.createObjectURL(file);
-      setCurrentInvoice(prev => ({ ...prev, file: fileUrl, type })); // Guardar URL local para vista previa
 
-      await processImageWithBackend(resizedBase64, type);
+      setCurrentInvoice(prev => ({ ...prev, file: fileUrl, type }));
+
+      // New Priority Flow: QR -> Backend
+      await processInvoicePriority(file, resizedBase64, type);
+
     } catch (error) {
       console.error("Error processing file:", error);
       setLoading(false);
@@ -1303,67 +1307,95 @@ export default function App() {
     }
   };
 
-  const processImageWithBackend = async (base64Image, type = 'expense') => {
+  const processInvoicePriority = async (originalFile, base64Image, type = 'expense') => {
     setLoading(true);
     setError('');
-    setLoadingMessage('Analizando tu factura...');
 
+    // 1. TIER 1: QR CODE (e-CF)
+    try {
+      setLoadingMessage('Buscando código QR...');
+      const qrUrl = await scanQRCode(originalFile);
+
+      if (qrUrl) {
+        console.log("QR Found:", qrUrl);
+        setLoadingMessage('Consultando DGII...');
+        const ecfResponse = await fetch('/api/ecf-lookup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: qrUrl })
+        });
+
+        if (ecfResponse.ok) {
+          const ecfData = await ecfResponse.json();
+          // Merge with type info
+          ecfData.type = type;
+
+          await handleSuccessProcessing(ecfData, base64Image);
+          return;
+        } else {
+          console.warn("DGII Lookup failed, falling back to Vision...");
+        }
+      }
+    } catch (qrError) {
+      console.error("QR Tier failed:", qrError);
+      // Continue to Tier 2
+    }
+
+    // 2. TIER 2 & 3: VISION OCR + GEMINI (Backend)
+    setLoadingMessage('Analizando con IA...');
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: base64Image, type }),
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Error en el servidor');
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Error en el servidor');
-      }
+      await handleSuccessProcessing(data, base64Image);
 
-      const parsedData = data;
-
-      // Normalizar fecha si la IA devuelve DD/MM/AAAA por error
-      if (parsedData.fecha) {
-        parsedData.fecha = normalizeDate(parsedData.fecha);
-      }
-
-      // --- VALIDACIÓN DE DUPLICADOS ---
-      if (parsedData.ncf) {
-        setLoadingMessage('Verificando duplicados...');
-        // Buscar si ya existe este NCF en las facturas del usuario actual
-        const dupQuery = query(
-          collection(db, "invoices"),
-          where("ncf", "==", parsedData.ncf),
-          where("userId", "==", viewingContext.uid)
-        );
-        const dupSnapshot = await getDocs(dupQuery);
-
-        if (!dupSnapshot.empty) {
-          // Si encontramos duplicado, guardamos los datos y mostramos el modal
-          const existingInvoice = dupSnapshot.docs[0].data();
-          existingInvoice.id = dupSnapshot.docs[0].id;
-
-          setDuplicateWarning(existingInvoice);
-          setLoading(false); // Parar loading
-          return; // Detener flujo
-        }
-      }
-
-      setCurrentInvoice(prev => ({ ...prev, image: base64Image, data: parsedData }));
-      setCurrentView('verify');
     } catch (err) {
-      console.error("Backend API Error:", err);
+      console.error("Backend Analysis Error:", err);
       // setError(`Error al procesar: ${err.message}`);
     } finally {
-      // Solo quitamos el loading si NO encontramos un duplicado (porque el modal se encarga)
       if (!duplicateWarning) {
         setLoading(false);
         setLoadingMessage('Cargando...');
       }
     }
+  };
+
+  const handleSuccessProcessing = async (parsedData, base64Image) => {
+    // Normalizar fecha
+    if (parsedData.fecha) {
+      parsedData.fecha = normalizeDate(parsedData.fecha);
+    }
+
+    // --- VALIDACIÓN DE DUPLICADOS ---
+    if (parsedData.ncf) {
+      setLoadingMessage('Verificando duplicados...');
+      const dupQuery = query(
+        collection(db, "invoices"),
+        where("ncf", "==", parsedData.ncf),
+        where("userId", "==", viewingContext.uid)
+      );
+      const dupSnapshot = await getDocs(dupQuery);
+
+      if (!dupSnapshot.empty) {
+        const existingInvoice = dupSnapshot.docs[0].data();
+        existingInvoice.id = dupSnapshot.docs[0].id;
+        setDuplicateWarning(existingInvoice);
+        // Don't stop loading here, let the modal handle it? 
+        // Actually original code stopped loading here.
+        setLoading(false);
+        return;
+      }
+    }
+
+    setCurrentInvoice(prev => ({ ...prev, image: base64Image, data: parsedData }));
+    setCurrentView('verify');
+    setLoading(false);
   };
 
 

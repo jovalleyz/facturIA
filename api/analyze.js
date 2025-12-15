@@ -34,7 +34,77 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'No text found in image' });
         }
 
-        // 2. Parse with Gemini 2.5 Flash Lite (User Specified)
+        // --- 2. TIER 2: REGEX PARSING (Traditional Invoices) ---
+        // Attempt to extract structured data using rigid patterns to avoid AI costs/latency.
+        try {
+            console.log("Tier 2: Attempting Regex extraction...");
+            const extractedData = {};
+
+            // NCF Pattern: B followed by 10 digits (e.g. B0100000154)
+            const ncfMatch = fullText.match(/\b(B\d{10})\b/i);
+            if (ncfMatch) extractedData.ncf = ncfMatch[1].toUpperCase();
+
+            // RNC Pattern: 9 or 11 digits, often labeled "RNC"
+            // We look for a standalone sequence of 9 or 11 digits that isn't the NCF
+            const rncMatches = fullText.matchAll(/\b(\d{9}|\d{11})\b/g);
+            for (const match of rncMatches) {
+                const val = match[1];
+                if (val !== '131932037' && val !== extractedData.ncf) { // Ignore OVM RNC if present
+                    extractedData.rnc = val;
+                    break; // Take the first reasonable RNC found
+                }
+            }
+
+            // Date Pattern: DD/MM/YYYY or DD-MM-YYYY or YYYY-MM-DD
+            const dateMatch = fullText.match(/\b(\d{2})[-/](\d{2})[-/](\d{4})\b/) ||
+                fullText.match(/\b(\d{4})[-/](\d{2})[-/](\d{2})\b/);
+
+            if (dateMatch) {
+                if (dateMatch[1].length === 4) {
+                    extractedData.fecha = `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}`; // YYYY-MM-DD
+                } else {
+                    extractedData.fecha = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`; // DD-MM-YYYY -> YYYY-MM-DD
+                }
+            }
+
+            // Total Amount Pattern: usually the largest currency-like number at the bottom
+            // Strategy: Find all numbers with decimals, pick the largest one.
+            const moneyMatches = fullText.matchAll(/(\d{1,3}(?:,\d{3})*\.\d{2})/g);
+            let maxAmount = 0;
+            for (const match of moneyMatches) {
+                const val = parseFloat(match[1].replace(/,/g, ''));
+                if (val > maxAmount) maxAmount = val;
+            }
+            if (maxAmount > 0) extractedData.total = maxAmount;
+
+            // ITBIS (18%) estimation
+            if (extractedData.total) {
+                extractedData.itbis = parseFloat((extractedData.total * 0.18 / 1.18).toFixed(2)); // Rough estimate
+            }
+
+            // Decision: Do we have enough confidence?
+            // If we have NCF, Total, and Date, we treat it as Success for Tier 2.
+            const isConfidenceHigh = extractedData.ncf && extractedData.total && extractedData.fecha;
+
+            if (isConfidenceHigh) {
+                console.log("Tier 2 Success:", extractedData);
+                return res.status(200).json({
+                    ...extractedData,
+                    nombre_negocio: "Detectado por OCR", // Placeholder, difficult to get accurate name via Regex
+                    categoria: "Otros",
+                    propina: 0,
+                    source: "vision-regex"
+                });
+            }
+            console.log("Tier 2 Failed (Low Confidence). Proceeding to Gemini...");
+
+        } catch (regexError) {
+            console.error("Tier 2 Error:", regexError);
+            // Verify we don't crash, just continue to Gemini
+        }
+
+
+        // --- 3. TIER 3: AI PARSING (Gemini 2.5) ---
         // Verified ID from search: gemini-2.5-flash-lite
         const GEMINI_API_KEY = process.env.VITE_GEMINI_API_KEY;
         const MODEL_ID = 'gemini-2.5-flash-lite';
