@@ -87,6 +87,11 @@ export default async function handler(req, res) {
             // If we have NCF, Total, and Date, we treat it as Success for Tier 2.
             const isConfidenceHigh = extractedData.ncf && extractedData.total && extractedData.fecha;
 
+            /* 
+               DISABLED TIER 2 EARLY RETURN
+               Reason: Regex cannot reliably extract the Business Name ("Detectado por OCR" is not acceptable).
+               We proceed to Gemini (Tier 3) to get the full data including the name.
+            
             if (isConfidenceHigh) {
                 console.log("Tier 2 Success:", extractedData);
                 return res.status(200).json({
@@ -97,7 +102,8 @@ export default async function handler(req, res) {
                     source: "vision-regex"
                 });
             }
-            console.log("Tier 2 Failed (Low Confidence). Proceeding to Gemini...");
+            */
+            console.log("Tier 2 Finished. Proceeding to Gemini for better accuracy...");
 
         } catch (regexError) {
             console.error("Tier 2 Error:", regexError);
