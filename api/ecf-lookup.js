@@ -70,7 +70,7 @@ export default async function handler(req, res) {
 
         const result = {
             rnc: rncEmisor,
-            ncf: ncf,
+            ncf: ncf ? (ncf.match(/([BE].*)/i)?.[1]?.toUpperCase() || ncf) : null,
             fecha: parseDate(fechaEmision),
             nombre_negocio: razonSocialEmisor,
             total: parseAmount(total),

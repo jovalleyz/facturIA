@@ -40,8 +40,9 @@ export default async function handler(req, res) {
             console.log("Tier 2: Attempting Regex extraction...");
             const extractedData = {};
 
-            // NCF Pattern: B followed by 10 digits (e.g. B0100000154)
-            const ncfMatch = fullText.match(/\b(B\d{10})\b/i);
+            // NCF Pattern: Matches B or E followed by 10+ digits, ignoring preceding characters
+            // Example: 00000B01000343445 -> B01000343445
+            const ncfMatch = fullText.match(/([BE]\d{10,})/i);
             if (ncfMatch) extractedData.ncf = ncfMatch[1].toUpperCase();
 
             // RNC Pattern: 9 or 11 digits, often labeled "RNC"
@@ -183,6 +184,14 @@ export default async function handler(req, res) {
 
         const cleanJson = textResponse.replace(/```json|```/g, '').trim();
         let parsedData = JSON.parse(cleanJson);
+
+        // CLEANING NCF: Remove any characters before the first 'B' or 'E'
+        if (parsedData.ncf) {
+            const cleanMatch = parsedData.ncf.match(/([BE].*)/i);
+            if (cleanMatch) {
+                parsedData.ncf = cleanMatch[1].toUpperCase();
+            }
+        }
 
         // USD Conversion Logic
         if (parsedData.moneda === 'USD') {
