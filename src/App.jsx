@@ -602,8 +602,12 @@ const SettingsView = ({
               <>
                 <p className="font-bold text-gray-900 text-lg truncate">{viewingContext.name}</p>
                 <p className="text-xs text-gray-500">{viewingContext.email}</p>
-                <p className="text-[10px] text-gray-300 font-mono mt-0.5">v1.3.2</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide flex items-center gap-1">
+                <div className="mt-2 inline-flex">
+                  <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200 shadow-sm animate-pulse">
+                    v1.3.2
+                  </span>
+                </div>
+                <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide flex items-center gap-1">
                   {viewingContext.type === 'personal' ? (
                     <><User size={10} /> Espacio Personal</>
                   ) : (
@@ -620,42 +624,20 @@ const SettingsView = ({
                 onClick={() => isEditing ? onProfileSave() : setIsEditing(true)}
                 className={`p-2 rounded-full transition-colors ${isEditing ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
               >
-                {isEditing ? <Save size={20} /> : <Edit2 size={18} />}
+                {isEditing ? <Check size={18} /> : <Settings size={18} />}
               </button>
               {isEditing && (
                 <button
-                  onClick={() => { setIsEditing(false); setEditName(viewingContext.name || ''); setEditPhoto(null); }}
-                  className="p-2 rounded-full bg-red-50 hover:bg-red-100 text-red-500 transition-colors"
+                  onClick={onProfileCancel}
+                  className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
                 >
-                  <XIcon size={20} />
+                  <X size={18} />
                 </button>
               )}
             </div>
           )}
         </div>
       </Card>
-
-      {/* Botón de Reparación / Actualización Forzada */}
-      <div className="mb-6 flex justify-center">
-        <button
-          onClick={async () => {
-            if (window.confirm("¿Deseas reiniciar la aplicación para aplicar las actualizaciones?")) {
-              if ('serviceWorker' in navigator) {
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                  await registration.unregister();
-                }
-              }
-              const keys = await caches.keys();
-              await Promise.all(keys.map(key => caches.delete(key)));
-              window.location.reload(true);
-            }
-          }}
-          className="text-xs text-gray-400 underline hover:text-red-500"
-        >
-          ¿Problemas? Reparar / Actualizar App
-        </button>
-      </div>
 
       {sharedAccounts.length > 0 && (
         <div className="mb-6">
@@ -2399,6 +2381,14 @@ export default function App() {
           <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
         </button>
       </nav>
+
+      {/* Global Loader Overlay */}
+      {loading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white animate-fade-in">
+          <Loader2 size={50} className="animate-spin mb-4 text-white" />
+          <p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage || 'Cargando...'}</p>
+        </div>
+      )}
     </div>
   );
 }
