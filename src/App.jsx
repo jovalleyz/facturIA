@@ -197,6 +197,7 @@ const Card = ({ children, className = "" }) => (
 );
 
 const Avatar = ({ name, url, size = "md", className = "" }) => {
+  const [imageError, setImageError] = useState(false);
   const sizeClasses = {
     sm: "w-8 h-8 text-xs",
     md: "w-12 h-12 text-lg",
@@ -204,13 +205,13 @@ const Avatar = ({ name, url, size = "md", className = "" }) => {
     xl: "w-24 h-24 text-3xl"
   };
 
-  if (url) {
+  if (url && !imageError) {
     return (
       <img
         src={url}
         alt={name}
         className={`${sizeClasses[size]} rounded-full object-cover border-2 border-white shadow-sm ${className}`}
-        onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+        onError={() => setImageError(true)}
       />
     );
   }
@@ -1738,7 +1739,7 @@ export default function App() {
           <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
               {viewingContext?.type === 'personal' && (
-                <Avatar name={viewingContext.name} url={viewingContext.photoURL} size="sm" />
+                <Avatar name={viewingContext.name} url={viewingContext.photoURL} size="md" />
               )}
               Hola, {viewingContext.name.split(' ')[0]}
             </h2>

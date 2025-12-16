@@ -35,6 +35,17 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Ignorar peticiones que no sean GET (como POST para subir archivos)
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
+  // Ignorar peticiones a otros dominios (como Firebase Storage/Auth)
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) {
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request)
       .then(response => {
