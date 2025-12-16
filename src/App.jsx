@@ -1491,17 +1491,28 @@ export default function App() {
         photoURL: photoURL
       });
 
-      const updatedUser = { ...user, displayName: newName, photoURL: photoURL };
+      // Force refresh user state to ensure UI updates across the board
+      const updatedUser = {
+        ...user,
+        displayName: newName,
+        photoURL: photoURL
+      };
+
       setUser(updatedUser);
-      setViewingContext({
-        ...viewingContext,
+
+      // Update context similarly
+      setViewingContext(prev => ({
+        ...prev,
         name: newName,
         photoURL: photoURL
-      });
+      }));
+
+      // Feedback for user
+      alert("Perfil actualizado correctamente");
 
     } catch (err) {
       console.error("Error updating profile:", err);
-      setError("Error al actualizar perfil");
+      setError("Error al actualizar perfil: " + err.message);
     } finally {
       setLoading(false);
       setLoadingMessage('Cargando...');
