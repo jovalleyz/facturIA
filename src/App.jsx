@@ -634,6 +634,28 @@ const SettingsView = ({
         </div>
       </Card>
 
+      {/* Botón de Reparación / Actualización Forzada */}
+      <div className="mb-6 flex justify-center">
+        <button
+          onClick={async () => {
+            if (window.confirm("¿Deseas reiniciar la aplicación para aplicar las actualizaciones?")) {
+              if ('serviceWorker' in navigator) {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                  await registration.unregister();
+                }
+              }
+              const keys = await caches.keys();
+              await Promise.all(keys.map(key => caches.delete(key)));
+              window.location.reload(true);
+            }
+          }}
+          className="text-xs text-gray-400 underline hover:text-red-500"
+        >
+          ¿Problemas? Reparar / Actualizar App
+        </button>
+      </div>
+
       {sharedAccounts.length > 0 && (
         <div className="mb-6">
           <h3 className="font-bold text-gray-800 mb-2 text-sm flex items-center gap-2"><ArrowRightLeft size={16} /> Cambiar Espacio</h3>
