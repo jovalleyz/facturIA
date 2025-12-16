@@ -833,7 +833,7 @@ const SettingsView = ({
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [loadingMessage, setLoadingMessage] = useState('Cargando...');
+  const [loadingMessage, setLoadingMessage] = useState('');
   const [currentView, setCurrentView] = useState('login');
   const [error, setError] = useState('');
 
@@ -1312,8 +1312,8 @@ export default function App() {
     if (!file) return;
 
     try {
+      setLoadingMessage('Procesando documento...');
       setLoading(true);
-      setLoadingMessage('Optimizing image...');
 
       // Resize image before processing to save tokens/costs
       const resizedBase64 = await resizeImage(file);
@@ -1497,8 +1497,8 @@ export default function App() {
   };
 
   const handleUpdateProfile = async (newName, newPhotoFile) => {
+    setLoadingMessage('Guardando datos de perfil...');
     setLoading(true);
-    setLoadingMessage('Actualizando perfil...');
     try {
       let photoURL = user.photoURL;
 
