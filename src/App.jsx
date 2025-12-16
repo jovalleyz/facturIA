@@ -602,6 +602,7 @@ const SettingsView = ({
               <>
                 <p className="font-bold text-gray-900 text-lg truncate">{viewingContext.name}</p>
                 <p className="text-xs text-gray-500">{viewingContext.email}</p>
+                <p className="text-[10px] text-gray-300 font-mono mt-0.5">v1.3.2</p>
                 <p className="text-[10px] text-gray-400 mt-0.5 uppercase tracking-wide flex items-center gap-1">
                   {viewingContext.type === 'personal' ? (
                     <><User size={10} /> Espacio Personal</>
