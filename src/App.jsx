@@ -563,6 +563,12 @@ const SettingsView = ({
     setEditPhoto(null);
   };
 
+  const onProfileCancel = () => {
+    setIsEditing(false);
+    setEditName(viewingContext.name || '');
+    setEditPhoto(null);
+  };
+
   return (
     <div className="p-4 pb-24 animate-fade-in bg-gradient-to-b from-blue-50/50 to-white min-h-full">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Ajustes</h2>
