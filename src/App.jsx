@@ -1544,6 +1544,22 @@ export default function App() {
             <Button type="submit" className="w-full shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}</Button>
           </form>
           <div className="mt-6"><button onClick={() => setCurrentView('register')} className="text-[#4E73DF] font-medium hover:underline">Registrarse</button></div>
+
+          {installPrompt && (
+            <div className="mt-8 pt-6 border-t border-gray-100 animate-fade-in">
+              <Button
+                onClick={handleInstallClick}
+                variant="outline"
+                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#4E73DF] hover:text-[#4E73DF] text-gray-500"
+              >
+                <Download size={18} />
+                Instalar App
+              </Button>
+            </div>
+          )}
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-400">© 2025 OVM Easy Apps. Todos los derechos reservados.</p>
+          </div>
         </div>
       </div>
     );
@@ -1593,6 +1609,9 @@ export default function App() {
             <Button type="submit" className="w-full shadow-lg" disabled={loading}>Registrarse</Button>
           </form>
           <div className="mt-6 text-center"><button onClick={() => setCurrentView('login')} className="text-[#4E73DF]">Volver al Login</button></div>
+          <div className="mt-8 text-center">
+            <p className="text-xs text-gray-400">© 2025 OVM Easy Apps. Todos los derechos reservados.</p>
+          </div>
         </div>
       </div>
     );
