@@ -959,14 +959,31 @@ export default function App() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
+
+        // 1. Fetch photo from Firestore to bypass Auth limit
+        let firestorePhoto = null;
+        try {
+          const userDoc = await getDoc(doc(db, "users", currentUser.uid));
+          if (userDoc.exists() && userDoc.data().photoBase64) {
+            firestorePhoto = userDoc.data().photoBase64;
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
+
         const personalContext = {
           uid: currentUser.uid,
           email: currentUser.email,
           name: currentUser.displayName || 'Usuario',
-          photoURL: currentUser.photoURL,
+          photoURL: firestorePhoto || currentUser.photoURL, // Priority to Firestore
           type: 'personal'
         };
         setViewingContext(personalContext);
+
+        // Update local user state with the correct photo
+        if (firestorePhoto) {
+          setUser(prev => ({ ...prev, photoURL: firestorePhoto }));
+        }
 
         if (currentView === 'login' || currentView === 'register') {
           setCurrentView('dashboard');
@@ -976,9 +993,7 @@ export default function App() {
           await Promise.all([
             fetchInvoices(currentUser.uid),
             fetchCollaborations(currentUser.email),
-            fetchInvoices(currentUser.uid),
-            fetchCollaborations(currentUser.email),
-            fetchMyCollaborators(currentUser.uid),
+            fetchMyCollaborators(currentUser.uid), // Duplicate removed
             fetchUserCompanies(currentUser.uid)
           ]);
         } catch (error) {
@@ -1585,20 +1600,36 @@ export default function App() {
 
     try {
       let photoURL = user.photoURL;
+      let base64Image = null;
 
       if (newPhotoFile) {
         console.log("Procesando imagen (Base64)...");
         // En lugar de Firebase Storage, usamos Base64 comprimido
-        const base64Image = await compressImage(newPhotoFile);
+        base64Image = await compressImage(newPhotoFile);
         photoURL = base64Image;
         console.log("Imagen procesada a Base64");
       }
 
-      console.log("Actualizando perfil en Auth...");
+      console.log("Actualizando perfil en Auth y Firestore...");
+
+      // 1. Update Auth (Display Name only, Photo URL is too long for Auth)
       await updateProfile(auth.currentUser, {
-        displayName: newName,
-        photoURL: photoURL
+        displayName: newName
+        // No photoURL here
       });
+
+      // 2. Update Firestore (Photo Base64)
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        email: user.email,
+        displayName: newName,
+        photoBase64: base64Image || user.photoURL // Update if new, else keep existing (if stored there) - logic refinement needed below
+      }, { merge: true });
+
+      // If we didn't upload a new one, we don't want to overwrite with old URL if it was from Auth
+      if (base64Image) {
+        await setDoc(userRef, { photoBase64: base64Image }, { merge: true });
+      }
 
       // Force refresh user state to ensure UI updates across the board
       const updatedUser = {
