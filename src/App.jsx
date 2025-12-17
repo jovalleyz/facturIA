@@ -223,6 +223,47 @@ const Avatar = ({ name, url, size = "md", className = "" }) => {
   );
 };
 
+// --- HELPER DE COMPRESIÓN ---
+const compressImage = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 500;
+        const MAX_HEIGHT = 500;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convertir a JPEG con calidad 0.7 para reducir tamaño
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 const DuplicateModal = ({ duplicateData, onCancel, onViewExisting }) => {
   if (!duplicateData) return null;
 
@@ -1546,20 +1587,11 @@ export default function App() {
       let photoURL = user.photoURL;
 
       if (newPhotoFile) {
-        console.log("Subiendo nueva imagen...");
-        const storageRef = ref(storage, `profile_images/${user.uid}`);
-
-        // Wrap upload in a race with a timeout
-        const uploadPromise = uploadBytes(storageRef, newPhotoFile);
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("La subida de la imagen tardó demasiado. Verifica tu conexión.")), 20000)
-        );
-
-        await Promise.race([uploadPromise, timeoutPromise]);
-        console.log("Imagen subida correctamente");
-
-        const url = await getDownloadURL(storageRef);
-        photoURL = `${url}?t=${Date.now()}`;
+        console.log("Procesando imagen (Base64)...");
+        // En lugar de Firebase Storage, usamos Base64 comprimido
+        const base64Image = await compressImage(newPhotoFile);
+        photoURL = base64Image;
+        console.log("Imagen procesada a Base64");
       }
 
       console.log("Actualizando perfil en Auth...");
