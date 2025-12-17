@@ -1540,16 +1540,29 @@ export default function App() {
 
     setLoadingMessage('Guardando datos de perfil...');
     setLoading(true);
+    console.log("Iniciando actualización de perfil...");
+
     try {
       let photoURL = user.photoURL;
 
       if (newPhotoFile) {
+        console.log("Subiendo nueva imagen...");
         const storageRef = ref(storage, `profile_images/${user.uid}`);
-        await uploadBytes(storageRef, newPhotoFile);
+
+        // Wrap upload in a race with a timeout
+        const uploadPromise = uploadBytes(storageRef, newPhotoFile);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("La subida de la imagen tardó demasiado. Verifica tu conexión.")), 20000)
+        );
+
+        await Promise.race([uploadPromise, timeoutPromise]);
+        console.log("Imagen subida correctamente");
+
         const url = await getDownloadURL(storageRef);
         photoURL = `${url}?t=${Date.now()}`;
       }
 
+      console.log("Actualizando perfil en Auth...");
       await updateProfile(auth.currentUser, {
         displayName: newName,
         photoURL: photoURL
@@ -1571,6 +1584,8 @@ export default function App() {
         photoURL: photoURL
       }));
 
+      console.log("Perfil actualizado con éxito");
+
       // Feedback for user
       setInfoNotification({
         type: 'success',
@@ -1584,7 +1599,7 @@ export default function App() {
       setInfoNotification({
         type: 'error',
         title: 'Error de actualización',
-        message: 'No se pudieron guardar los cambios. Inténtalo de nuevo.'
+        message: err.message || 'No se pudieron guardar los cambios. Inténtalo de nuevo.'
       });
       setError("Error al actualizar perfil: " + err.message);
     } finally {
