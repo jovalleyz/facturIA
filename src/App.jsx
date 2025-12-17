@@ -1516,6 +1516,28 @@ export default function App() {
   };
 
   const handleUpdateProfile = async (newName, newPhotoFile) => {
+    // Validación de archivo
+    if (newPhotoFile) {
+      if (!newPhotoFile.type.startsWith('image/')) {
+        setInfoNotification({
+          type: 'error',
+          title: 'Formato no válido',
+          message: 'Por favor selecciona una imagen (JPG, PNG, WEBP).'
+        });
+        return;
+      }
+
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+      if (newPhotoFile.size > MAX_SIZE) {
+        setInfoNotification({
+          type: 'error',
+          title: 'Imagen muy grande',
+          message: 'La imagen debe pesar menos de 5MB.'
+        });
+        return;
+      }
+    }
+
     setLoadingMessage('Guardando datos de perfil...');
     setLoading(true);
     try {
@@ -1558,6 +1580,12 @@ export default function App() {
 
     } catch (err) {
       console.error("Error updating profile:", err);
+      // Usar InfoModal para mostrar el error al usuario
+      setInfoNotification({
+        type: 'error',
+        title: 'Error de actualización',
+        message: 'No se pudieron guardar los cambios. Inténtalo de nuevo.'
+      });
       setError("Error al actualizar perfil: " + err.message);
     } finally {
       setLoading(false);
