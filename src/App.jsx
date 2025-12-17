@@ -363,6 +363,35 @@ const InvoiceDetailModal = ({ invoice, onClose }) => {
   );
 };
 
+const InfoModal = ({ type = 'success', title, message, onClose }) => {
+  const isError = type === 'error';
+  const Icon = isError ? AlertCircle : Check;
+  const colorClass = isError ? 'red' : 'green';
+  const bgClass = isError ? 'bg-red-50' : 'bg-green-50';
+  const textClass = isError ? 'text-red-500' : 'text-green-500';
+  const borderClass = isError ? 'border-red-100' : 'border-green-100';
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[80] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className={`${bgClass} p-6 text-center border-b ${borderClass}`}>
+          <div className={`w-16 h-16 ${isError ? 'bg-red-100' : 'bg-green-100'} rounded-full flex items-center justify-center mx-auto mb-3 ${textClass}`}>
+            <Icon size={32} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+          <p className="text-sm text-gray-500 mt-1">{message}</p>
+        </div>
+
+        <div className="p-6">
+          <Button onClick={onClose} className={`w-full ${isError ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'} text-white shadow-lg`}>
+            Entendido
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DeleteConfirmationModal = ({ onConfirm, onCancel, title = "¿Eliminar Factura?", description = "Esta acción no se puede deshacer." }) => {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4 animate-fade-in">
@@ -844,6 +873,8 @@ export default function App() {
   const [deleteConfirmation, setDeleteConfirmation] = useState(null); // ID de la factura a eliminar
   const [companyToDelete, setCompanyToDelete] = useState(null); // ID de la empresa a eliminar
   const [installPrompt, setInstallPrompt] = useState(null);
+  const [infoNotification, setInfoNotification] = useState(null); // { type: 'success'|'error', title: string, message: string }
+
   useEffect(() => {
     const handler = (e) => {
       e.preventDefault();
@@ -1519,7 +1550,11 @@ export default function App() {
       }));
 
       // Feedback for user
-      alert("Perfil actualizado correctamente");
+      setInfoNotification({
+        type: 'success',
+        title: '¡Perfil Actualizado!',
+        message: 'Tus cambios se han guardado correctamente.'
+      });
 
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -2301,6 +2336,15 @@ export default function App() {
           description="¿Está seguro que desea eliminar esta empresa?"
           onConfirm={confirmDeleteCompany}
           onCancel={() => setCompanyToDelete(null)}
+        />
+      )}
+
+      {infoNotification && (
+        <InfoModal
+          type={infoNotification.type}
+          title={infoNotification.title}
+          message={infoNotification.message}
+          onClose={() => setInfoNotification(null)}
         />
       )}
 
