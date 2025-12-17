@@ -637,7 +637,7 @@ const SettingsView = ({
                   onClick={onProfileCancel}
                   className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
                 >
-                  <X size={18} />
+                  <XIcon size={18} />
                 </button>
               )}
             </div>
