@@ -48,6 +48,9 @@ import {
   Briefcase,
   User,
   Edit2,
+  Calendar,
+  ChevronDown,
+  Infinity,
   Save,
   X as XIcon,
   ImageIcon,
@@ -64,10 +67,16 @@ import {
   Building2,
   Phone,
   MapPin,
-  ChevronLeft
+  ChevronLeft,
+  Hash, Store, LayoutGrid, ArrowLeft, HelpCircle, Layout, Info, UserCircle
 } from 'lucide-react';
 
 import { scanQRCode } from './utils/qrScanner';
+import SettingsView from './components/SettingsView';
+import StatsView from './components/StatsView';
+import WelcomeView from './components/WelcomeView';
+import RegisterView from './components/RegisterView';
+import LoginView from './components/LoginView';
 
 /**
  * CONFIGURACIÓN Y CREDENCIALES
@@ -310,95 +319,126 @@ const DuplicateModal = ({ duplicateData, onCancel, onViewExisting }) => {
   );
 };
 
-const InvoiceDetailModal = ({ invoice, onClose }) => {
+const InvoiceDetailModal = ({ invoice, onClose, onEdit, onDelete }) => {
   if (!invoice) return null;
 
+  const total = parseFloat(invoice.total || 0);
+  const itbis18 = parseFloat(invoice.itbis18 || invoice.itbis || 0);
+  const itbis16 = parseFloat(invoice.itbis16 || 0);
+  const propina = parseFloat(invoice.propina || 0);
+  const subtotal = total - itbis18 - itbis16 - propina;
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Factura ${invoice.nombre_negocio}`,
+          text: `Detalle de factura: ${invoice.nombre_negocio} - ${formatCurrency(total)}`,
+        });
+      } catch (err) { console.log('Error sharing:', err); }
+    } else {
+      alert("Función de compartir no soportada en este dispositivo.");
+    }
+  };
+
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-        <div className="bg-blue-50 p-6 text-center border-b border-blue-100 relative">
-          <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors">
-            <XIcon size={24} />
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-all duration-300" onClick={onClose}>
+      <div className="bg-white dark:bg-[#1F2937] w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden flex flex-col relative animate-fade-in ring-1 ring-white/20" onClick={e => e.stopPropagation()}>
+        <div className="absolute top-0 w-full h-40 bg-gradient-to-b from-blue-50/80 to-transparent dark:from-blue-900/10 pointer-events-none"></div>
+
+        <div className="flex justify-end p-5 relative z-10">
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm flex items-center justify-center text-gray-400 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-600 transition-all shadow-sm">
+            <span className="material-icons-round text-xl">close</span>
           </button>
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-[#4E73DF]">
-            <FileText size={32} />
+        </div>
+
+        <div className="px-6 flex flex-col items-center relative z-10 -mt-4">
+          <div className="w-20 h-20 bg-white dark:bg-gray-800 rounded-2xl shadow-[0_0_20px_rgba(79,117,227,0.15)] flex items-center justify-center text-[#4F75E3] mb-4 ring-4 ring-white dark:ring-gray-700">
+            <span className="material-icons-round text-4xl">storefront</span>
           </div>
-          <h3 className="text-xl font-bold text-gray-800 break-words">{invoice.nombre_negocio}</h3>
-          <p className="text-sm text-gray-500 mt-1">{invoice.fecha || 'Sin fecha'}</p>
+          <h3 className="text-center font-bold text-xl text-gray-900 dark:text-white leading-tight">
+            {invoice.nombre_negocio}
+          </h3>
+          <p className="text-xs text-[#4F75E3] font-medium bg-blue-50 dark:bg-blue-900/30 px-3 py-1 rounded-full mt-2">
+            {invoice.fecha || 'Sin fecha'}
+          </p>
+          <div className="mt-6 mb-3 flex flex-col items-center">
+            <span className="text-sm text-gray-500 dark:text-gray-400 font-medium tracking-wide">Total Facturado</span>
+            <span className="text-4xl font-extrabold text-gray-900 dark:text-white tracking-tight mt-0.5">{formatCurrency(total)}</span>
+          </div>
         </div>
 
         <div className="p-6 space-y-4">
-          <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-sm space-y-2">
-            <div className="flex justify-between">
-              <span className="text-gray-500">RNC:</span>
-              <span className="font-mono text-gray-700">{invoice.rnc || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">NCF:</span>
-              <span className="font-mono text-gray-700">{invoice.ncf || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Categoría:</span>
-              <span className="text-gray-700">{invoice.categoria || 'Otros'}</span>
+          <div className="bg-gray-50 dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-blue-100/50 dark:bg-blue-900/20 flex items-center justify-center text-[#4F75E3]">
+                    <span className="material-icons-round text-base">badge</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">RNC</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white font-mono">{invoice.rnc || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between border-b border-gray-200/60 dark:border-gray-700/60 pb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-100/50 dark:bg-purple-900/20 flex items-center justify-center text-purple-500">
+                    <span className="material-icons-round text-base">receipt_long</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">NCF</span>
+                </div>
+                <span className="text-sm font-semibold text-gray-900 dark:text-white font-mono">{invoice.ncf || 'N/A'}</span>
+              </div>
+              <div className="flex items-center justify-between pt-1">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-green-100/50 dark:bg-green-900/20 flex items-center justify-center text-green-600">
+                    <span className="material-icons-round text-base">category</span>
+                  </div>
+                  <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Categoría</span>
+                </div>
+                <span className="text-xs font-semibold bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300 px-2 py-1 rounded-md">
+                  {invoice.categoria || 'Otros'}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="space-y-2 pt-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Monto Neto:</span>
-              <span>{formatCurrency((parseFloat(invoice.total || 0) - parseFloat(invoice.itbis18 || invoice.itbis || 0) - parseFloat(invoice.itbis16 || 0) - parseFloat(invoice.propina || 0)))}</span>
+          <div className="bg-gray-50 dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50 space-y-2">
+            <div className="flex justify-between items-center px-1">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Monto Neto</span>
+              <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>ITBIS (18%):</span>
-              <span>{formatCurrency(invoice.itbis18 || invoice.itbis || 0)}</span>
-            </div>
-            {(invoice.itbis16 > 0) && (
-              <div className="flex justify-between text-sm text-gray-600">
-                <span>ITBIS (16%):</span>
-                <span>{formatCurrency(invoice.itbis16 || 0)}</span>
+            {itbis18 > 0 && (
+              <div className="flex justify-between items-center px-1">
+                <span className="text-sm text-gray-500 dark:text-gray-400">ITBIS (18%)</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(itbis18)}</span>
               </div>
             )}
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Propina:</span>
-              <span>{formatCurrency(invoice.propina || 0)}</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-100">
-              <span>Total:</span>
-              <span>{formatCurrency(invoice.total)}</span>
-            </div>
-
-            {invoice.moneda === 'USD' && invoice.original_total && (
-              <div className="mt-3 pt-3 border-t border-dashed border-gray-200">
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Detalles Originales (USD)</p>
-                  <p className="text-[10px] font-medium text-gray-400">Tasa: {invoice.tasa_cambio}</p>
-                </div>
-                <div className="space-y-1 text-xs text-gray-500">
-                  <div className="flex justify-between">
-                    <span>Monto Neto:</span>
-                    <span>${(parseFloat(invoice.original_total) - ((parseFloat(invoice.itbis18 || invoice.itbis || 0) + parseFloat(invoice.itbis16 || 0) + parseFloat(invoice.propina || 0)) / (parseFloat(invoice.tasa_cambio) || 1))).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>ITBIS:</span>
-                    <span>${((parseFloat(invoice.itbis18 || invoice.itbis || 0) + parseFloat(invoice.itbis16 || 0)) / (parseFloat(invoice.tasa_cambio) || 1)).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Propina:</span>
-                    <span>${(parseFloat(invoice.propina || 0) / (parseFloat(invoice.tasa_cambio) || 1)).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between font-bold text-gray-600 pt-1">
-                    <span>Total USD:</span>
-                    <span>${parseFloat(invoice.original_total).toFixed(2)}</span>
-                  </div>
-                </div>
+            {itbis16 > 0 && (
+              <div className="flex justify-between items-center px-1">
+                <span className="text-sm text-gray-500 dark:text-gray-400">ITBIS (16%)</span>
+                <span className="text-sm font-bold text-gray-900 dark:text-white">{formatCurrency(itbis16)}</span>
               </div>
             )}
+            <div className="flex justify-between items-center px-1">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Propina</span>
+              <span className="text-sm font-bold text-gray-400 dark:text-gray-600">{formatCurrency(propina)}</span>
+            </div>
           </div>
 
-          <div className="pt-2">
-            <Button onClick={onClose} className="w-full bg-gray-100 text-gray-700 hover:bg-gray-200">
-              Cerrar
-            </Button>
+          <div className="grid grid-cols-3 gap-3 pt-2">
+            <button onClick={onEdit} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
+              <span className="material-icons-round text-gray-400 group-hover:text-[#4F75E3] transition-colors">edit</span>
+              <span className="text-[10px] font-bold text-gray-500 group-hover:text-[#4F75E3] uppercase tracking-wide">Editar</span>
+            </button>
+            <button onClick={onDelete} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-sm hover:shadow-md hover:border-red-200 dark:hover:border-red-900/50 transition-all group">
+              <span className="material-icons-round text-gray-400 group-hover:text-red-500 transition-colors">delete_outline</span>
+              <span className="text-[10px] font-bold text-gray-500 group-hover:text-red-500 uppercase tracking-wide">Eliminar</span>
+            </button>
+            <button onClick={onClose} className="flex flex-col items-center justify-center gap-1.5 p-3 rounded-2xl bg-[#4F75E3] text-white shadow-lg shadow-blue-200 dark:shadow-blue-900/20 hover:bg-[#3D62CC] transition-all transform hover:-translate-y-0.5 group">
+              <span className="material-icons-round text-white text-xl">check</span>
+              <span className="text-[10px] font-bold text-white uppercase tracking-wide">Cerrar</span>
+            </button>
           </div>
         </div>
       </div>
@@ -562,331 +602,7 @@ const CompanyInfoModal = ({ companies, onClose }) => {
 
 // --- COMPONENTES EXTERNOS ---
 
-const SettingsView = ({
-  viewingContext,
-  sharedAccounts,
-  handleSwitchAccount,
-  handleSwitchToPersonal,
-  exportToCSV,
-  handleInviteCollaborator,
-  onSignOut,
-  onUpdateProfile,
-  installPrompt,
-  onInstall,
-  myCollaborators,
-  handleRevokeAccess,
-  // New props for company management
-  userCompanies,
-  onAddCompany,
-  onDeleteCompany,
-  onUpdateCompany,
-  onSeedOVM
-}) => {
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState(viewingContext.name || '');
-  const [editPhoto, setEditPhoto] = useState(null);
 
-  // Stats for Add Company Form
-  const [newCompany, setNewCompany] = useState({ name: '', rnc: '', phone: '', address: '' });
-  const [showAddCompany, setShowAddCompany] = useState(false);
-  const [editingCompanyId, setEditingCompanyId] = useState(null);
-
-  const handleAddCompanySubmit = (e) => {
-    e.preventDefault();
-    if (!newCompany.name || !newCompany.rnc) return alert("Nombre y RNC requeridos");
-
-    if (editingCompanyId) {
-      onUpdateCompany(editingCompanyId, newCompany);
-      setEditingCompanyId(null);
-    } else {
-      onAddCompany(newCompany);
-    }
-    setNewCompany({ name: '', rnc: '', phone: '', address: '' });
-    setShowAddCompany(false);
-  };
-
-  const handleEditClick = (company) => {
-    setNewCompany({
-      name: company.name,
-      rnc: company.rnc,
-      phone: company.phone || '',
-      address: company.address || ''
-    });
-    setEditingCompanyId(company.id);
-    setShowAddCompany(true);
-  };
-
-  const handleCancelEdit = () => {
-    setNewCompany({ name: '', rnc: '', phone: '', address: '' });
-    setEditingCompanyId(null);
-    setShowAddCompany(false);
-  };
-
-
-  useEffect(() => {
-    setEditName(viewingContext.name || '');
-  }, [viewingContext.name]);
-
-  const onProfileSave = async () => {
-    if (viewingContext.type === 'shared') return;
-    await onUpdateProfile(editName, editPhoto);
-    setIsEditing(false);
-    setEditPhoto(null);
-  };
-
-  const onProfileCancel = () => {
-    setIsEditing(false);
-    setEditName(viewingContext.name || '');
-    setEditPhoto(null);
-  };
-
-  return (
-    <div className="p-4 pb-24 animate-fade-in bg-gradient-to-b from-blue-50/50 to-white min-h-full">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Ajustes</h2>
-
-      <Card className="mb-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-4 opacity-5">
-          <Settings size={80} />
-        </div>
-
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="relative">
-            <Avatar
-              name={viewingContext.name}
-              url={editPhoto ? URL.createObjectURL(editPhoto) : viewingContext.photoURL}
-              size="lg"
-            />
-            {isEditing && (
-              <label className="absolute bottom-0 right-0 bg-white rounded-full p-1.5 shadow-md border border-gray-200 cursor-pointer text-[#4E73DF] hover:bg-gray-50 transition-colors">
-                <ImageIcon size={16} />
-                <input type="file" accept="image/*" onChange={(e) => setEditPhoto(e.target.files[0])} className="hidden" />
-              </label>
-            )}
-          </div>
-
-          <div className="flex-1 overflow-hidden">
-            {isEditing ? (
-              <div className="space-y-2">
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm font-bold focus:ring-2 focus:ring-blue-500 outline-none"
-                  placeholder="Tu nombre"
-                />
-              </div>
-            ) : (
-              <>
-                <p className="font-bold text-gray-900 text-lg truncate">{viewingContext.name}</p>
-                <p className="text-xs text-gray-500">{viewingContext.email}</p>
-                <div className="mt-2 inline-flex">
-                  <span className="text-xs font-bold text-blue-600 bg-blue-100 px-2 py-0.5 rounded-full border border-blue-200 shadow-sm animate-pulse">
-                    v1.3.2
-                  </span>
-                </div>
-                <p className="text-[10px] text-gray-400 mt-2 uppercase tracking-wide flex items-center gap-1">
-                  {viewingContext.type === 'personal' ? (
-                    <><User size={10} /> Espacio Personal</>
-                  ) : (
-                    <><Users size={10} /> Espacio Colaborativo</>
-                  )}
-                </p>
-              </>
-            )}
-          </div>
-
-          {viewingContext.type === 'personal' && (
-            <div className="flex gap-1">
-              <button
-                onClick={() => isEditing ? onProfileSave() : setIsEditing(true)}
-                className={`p-2 rounded-full transition-colors ${isEditing ? 'bg-green-50 text-green-600 hover:bg-green-100' : 'bg-gray-50 text-gray-600 hover:bg-gray-100'}`}
-              >
-                {isEditing ? <Check size={18} /> : <Settings size={18} />}
-              </button>
-              {isEditing && (
-                <button
-                  onClick={onProfileCancel}
-                  className="p-2 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors"
-                >
-                  <XIcon size={18} />
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {sharedAccounts.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-bold text-gray-800 mb-2 text-sm flex items-center gap-2"><ArrowRightLeft size={16} /> Cambiar Espacio</h3>
-          <div className="space-y-2">
-            {viewingContext.type !== 'personal' && (
-              <button onClick={handleSwitchToPersonal} className="w-full p-3 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 flex items-center justify-between shadow-sm">
-                <span className="text-sm font-medium">Volver a mi cuenta</span>
-                <Check size={16} />
-              </button>
-            )}
-            {sharedAccounts.map(acc => (
-              <button
-                key={acc.id}
-                onClick={() => handleSwitchAccount(acc)}
-                className={`w-full p-3 rounded-lg border flex items-center justify-between transition-all ${viewingContext.email === acc.ownerEmail ? 'border-orange-200 bg-orange-50 text-orange-700 shadow-sm' : 'border-gray-100 bg-white hover:bg-gray-50'}`}
-              >
-                <div className="text-left">
-                  <p className="text-sm font-bold">{acc.ownerName || acc.ownerEmail}</p>
-                  <p className="text-[10px] text-gray-500">Propietario</p>
-                </div>
-                {viewingContext.email === acc.ownerEmail && <Check size={16} />}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-
-
-      {installPrompt && (
-        <button onClick={onInstall} className="w-full bg-blue-600 text-white p-4 rounded-xl flex items-center justify-between mb-4 shadow-lg hover:bg-blue-700 transition-colors group animate-pulse">
-          <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-lg"><Download size={20} /></div>
-            <div className="text-left">
-              <p className="font-bold text-sm">Instalar Aplicación</p>
-              <p className="text-[10px] text-blue-100">Accede más rápido desde tu inicio</p>
-            </div>
-          </div>
-        </button>
-      )}
-
-      <button onClick={exportToCSV} className="w-full bg-white border border-gray-200 p-4 rounded-xl flex items-center justify-between mb-4 shadow-sm hover:bg-gray-50 transition-colors group">
-        <div className="flex items-center gap-3">
-          <div className="bg-green-50 text-green-600 p-2 rounded-lg group-hover:scale-110 transition-transform"><Download size={20} /></div>
-          <div className="text-left"><p className="font-bold text-gray-800 text-sm">Exportar Reporte</p></div>
-        </div>
-      </button>
-
-      <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm">
-        <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm"><UserPlus size={16} /> Agregar Colaborador</h3>
-        <div className="flex gap-2">
-          <input type="email" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} placeholder="email@amigo.com" className="flex-1 border rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-500" />
-          <button onClick={() => { handleInviteCollaborator(inviteEmail); setInviteEmail(''); }} className="bg-blue-600 text-white rounded-lg px-4 py-2 text-xs font-medium hover:bg-blue-700 transition-colors">Invitar</button>
-        </div>
-        <p className="text-[10px] text-gray-400 mt-2">Podrá ver y descargar tus facturas, pero no editarlas.</p>
-
-        {myCollaborators && myCollaborators.length > 0 && (
-          <div className="mt-6 border-t pt-4">
-            <h4 className="font-bold text-gray-700 mb-3 text-xs uppercase tracking-wider">Accesos Concedidos</h4>
-            <div className="space-y-2">
-              {myCollaborators.map(collab => (
-                <div key={collab.id} className="flex items-center justify-between bg-gray-50 p-2 rounded-lg border border-gray-100">
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    <div className="bg-blue-100 p-1.5 rounded-full text-blue-600"><User size={14} /></div>
-                    <span className="text-sm text-gray-700 truncate">{collab.collaboratorEmail}</span>
-                  </div>
-                  <button onClick={() => handleRevokeAccess(collab.id)} className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Revocar acceso">
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="bg-white border border-gray-200 p-4 rounded-xl shadow-sm mb-6 mt-4">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2 text-sm">
-            <Building2 size={16} /> Mis Empresas
-          </h3>
-          <button
-            onClick={showAddCompany ? handleCancelEdit : () => setShowAddCompany(true)}
-            className="text-xs bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg font-bold hover:bg-blue-100 transition-colors"
-          >
-            {showAddCompany ? 'Cancelar' : '+ Nueva'}
-          </button>
-        </div>
-
-        {showAddCompany && (
-          <form onSubmit={handleAddCompanySubmit} className="mb-4 bg-gray-50 p-3 rounded-xl border border-blue-100 animate-fade-in">
-            <div className="space-y-3">
-              <input
-                type="text"
-                placeholder="Razón Social (Nombre)"
-                value={newCompany.name}
-                onChange={e => setNewCompany({ ...newCompany, name: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
-                required
-              />
-              <input
-                type="text"
-                placeholder="RNC"
-                value={newCompany.rnc}
-                onChange={e => setNewCompany({ ...newCompany, rnc: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
-                required
-              />
-              <input
-                type="tel"
-                placeholder="Teléfono (Opcional)"
-                value={newCompany.phone}
-                onChange={e => setNewCompany({ ...newCompany, phone: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
-              />
-              <input
-                type="text"
-                placeholder="Dirección (Opcional)"
-                value={newCompany.address}
-                onChange={e => setNewCompany({ ...newCompany, address: e.target.value })}
-                className="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:border-blue-500"
-              />
-              <Button type="submit" className="w-full py-2 text-sm shadow-none">{editingCompanyId ? 'Actualizar Empresa' : 'Guardar Empresa'}</Button>
-            </div>
-          </form>
-        )}
-
-        <div className="space-y-2">
-          {userCompanies && userCompanies.length > 0 ? (
-            userCompanies.map(comp => (
-              <div key={comp.id} className="p-3 border border-gray-100 rounded-lg flex justify-between items-center hover:bg-gray-50 transition-colors">
-                <div>
-                  <p className="font-bold text-gray-800 text-sm">{comp.name}</p>
-                  <p className="text-xs text-gray-500 font-mono">RNC: {comp.rnc}</p>
-                </div>
-
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleEditClick(comp)}
-                    className="p-1.5 text-gray-400 hover:text-blue-500 transition-colors"
-                  >
-                    <Edit2 size={16} />
-                  </button>
-                  <button
-                    onClick={() => onDeleteCompany(comp.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 transition-colors"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))
-          ) : (
-            <p className="text-center text-xs text-gray-400 py-2 italic">No tienes empresas registradas.</p>
-          )}
-        </div>
-
-
-        {/* Temporary Seed Button */}
-        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-center">
-          <button onClick={onSeedOVM} className="text-xs text-blue-400 hover:text-blue-600 underline">
-            Sincronizar OVM en cuentas vinculadas
-          </button>
-        </div>
-      </div>
-
-      <div className="mt-8"><Button variant="danger" onClick={onSignOut} className="w-full"><LogOut size={18} className="mr-2" /> Cerrar Sesión</Button></div>
-    </div >
-  );
-};
 
 // --- COMPONENTES LÓGICOS DE LA APP ---
 
@@ -894,7 +610,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingMessage, setLoadingMessage] = useState('');
-  const [currentView, setCurrentView] = useState('login');
+  const [currentView, setCurrentView] = useState('welcome');
   const [error, setError] = useState('');
 
   const [viewingContext, setViewingContext] = useState(null);
@@ -917,6 +633,30 @@ export default function App() {
   const [companyToDelete, setCompanyToDelete] = useState(null); // ID de la empresa a eliminar
   const [installPrompt, setInstallPrompt] = useState(null);
   const [infoNotification, setInfoNotification] = useState(null); // { type: 'success'|'error', title: string, message: string }
+  const [historyActiveTab, setHistoryActiveTab] = useState('expense');
+  const [historySelectedDate, setHistorySelectedDate] = useState(new Date());
+  const [historyViewMode, setHistoryViewMode] = useState('month'); // 'month' | 'all' // Lifted state for HistoryView tabs
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  };
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      setDarkMode(true);
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   useEffect(() => {
     const handler = (e) => {
@@ -957,6 +697,10 @@ export default function App() {
     }
   };
 
+  // Ref for currentView to access it inside onAuthStateChanged without adding it to dependencies
+  const currentViewRef = React.useRef(currentView);
+  useEffect(() => { currentViewRef.current = currentView; }, [currentView]);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
@@ -977,7 +721,7 @@ export default function App() {
           uid: currentUser.uid,
           email: currentUser.email,
           name: currentUser.displayName || 'Usuario',
-          photoURL: firestorePhoto || currentUser.photoURL, // Priority to Firestore
+          photoURL: firestorePhoto || currentUser.photoURL,
           type: 'personal'
         };
         setViewingContext(personalContext);
@@ -987,7 +731,9 @@ export default function App() {
           setUser(prev => ({ ...prev, photoURL: firestorePhoto }));
         }
 
-        if (currentView === 'login' || currentView === 'register') {
+        // Use ref to check current view state accurately
+        const cv = currentViewRef.current;
+        if (cv === 'login' || cv === 'register' || cv === 'welcome') {
           setCurrentView('dashboard');
         }
 
@@ -995,7 +741,7 @@ export default function App() {
           await Promise.all([
             fetchInvoices(currentUser.uid),
             fetchCollaborations(currentUser.email),
-            fetchMyCollaborators(currentUser.uid), // Duplicate removed
+            fetchMyCollaborators(currentUser.uid),
             fetchUserCompanies(currentUser.uid)
           ]);
         } catch (error) {
@@ -1003,7 +749,12 @@ export default function App() {
         }
 
       } else {
-        setCurrentView('login');
+        // Only redirect to login if we are in a protected view needed to be guarded
+        // If we are in 'welcome', let it stay there.
+        const cv = currentViewRef.current;
+        if (cv !== 'welcome' && cv !== 'register' && cv !== 'login') {
+          setCurrentView('login');
+        }
       }
       setLoading(false);
     });
@@ -1236,7 +987,8 @@ export default function App() {
 
   const fetchInvoices = async (targetUid) => {
     try {
-      const q = query(collection(db, "invoices"), where("userId", "==", targetUid), orderBy("createdAt", "desc"));
+      // Removed orderBy to avoid index issues - sorting client-side instead
+      const q = query(collection(db, "invoices"), where("userId", "==", targetUid));
       const querySnapshot = await getDocs(q);
       const docs = [];
 
@@ -1268,6 +1020,13 @@ export default function App() {
         newStats[type].byCategory[cat] += amount;
       });
 
+      // Sort by createdAt descending client-side
+      docs.sort((a, b) => {
+        const dateA = a.createdAt?.seconds || 0;
+        const dateB = b.createdAt?.seconds || 0;
+        return dateB - dateA;
+      });
+
       setInvoices(docs);
       setStats(newStats);
     } catch (err) {
@@ -1279,8 +1038,22 @@ export default function App() {
     if (invoices.length === 0) return;
 
     let dataToExport = invoices;
+
+    // Apply Type Filter
     if (filterType !== 'all') {
       dataToExport = invoices.filter(inv => inv.type === filterType);
+    }
+
+    // Apply Date Filter (using history state)
+    if (historyViewMode !== 'all') {
+      dataToExport = dataToExport.filter(inv => {
+        if (!inv.fecha) return false;
+        const invDate = new Date(inv.fecha);
+        return (
+          invDate.getMonth() === historySelectedDate.getMonth() &&
+          invDate.getFullYear() === historySelectedDate.getFullYear()
+        );
+      });
     }
 
     if (dataToExport.length === 0) {
@@ -1532,7 +1305,11 @@ export default function App() {
       }
 
       await fetchInvoices(viewingContext.uid);
-      setCurrentView('dashboard');
+      if (validatedData.id) {
+        setCurrentView('history');
+      } else {
+        setCurrentView('dashboard');
+      }
       setCurrentInvoice({ image: null, data: null });
     } catch (err) {
       console.error(err);
@@ -1674,127 +1451,120 @@ export default function App() {
   };
 
   const handleInvoiceClick = (invoice) => {
+    console.log("Editing invoice:", invoice);
     setCurrentInvoice({
       image: null,
-      data: invoice
+      data: invoice,
+      isEditMode: true // Explicit flag
     });
     setCurrentView('verify');
   };
 
   // --- VISTAS ---
 
-  const LoginView = () => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const handleLogin = async (e) => {
-      e.preventDefault();
-      setLoading(true);
-      setLoadingMessage('Iniciando sesión...');
-      setError('');
-      try { await signInWithEmailAndPassword(auth, email, password); }
-      catch (err) { setError('Error de autenticación.'); setLoading(false); }
-    };
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="w-full max-w-md text-center bg-white p-8 rounded-2xl shadow-xl">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-[#4E73DF] mb-4 shadow-lg text-white">
-            <FileText size={40} />
-          </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">FacturIA</h1>
-          <p className="text-gray-500 mb-8">Gestión inteligente de gastos</p>
+  // --- AUTH LOGIC ---
 
-          <form onSubmit={handleLogin} className="space-y-4 text-left">
-            <Input label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="tu@email.com" />
-            <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
-            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
-            <Button type="submit" className="w-full shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all" disabled={loading}>{loading ? <Loader2 className="animate-spin" /> : 'Iniciar Sesión'}</Button>
-          </form>
-          <div className="mt-6"><button onClick={() => setCurrentView('register')} className="text-[#4E73DF] font-medium hover:underline">Registrarse</button></div>
+  const handleLoginAction = async (email, password) => {
+    setLoading(true);
+    setLoadingMessage('Iniciando sesión...');
+    setError('');
 
-          {installPrompt && (
-            <div className="mt-8 pt-6 border-t border-gray-100 animate-fade-in">
-              <Button
-                onClick={handleInstallClick}
-                variant="outline"
-                className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-[#4E73DF] hover:text-[#4E73DF] text-gray-500"
-              >
-                <Download size={18} />
-                Instalar App
-              </Button>
-            </div>
-          )}
-          <div className="mt-8 text-center">
-            <p className="text-xs text-gray-400">© 2025 OVM Easy Apps. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </div>
-    );
+    // Safety timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setLoading((currentLoading) => {
+        if (currentLoading) {
+          setError('La conexión está tardando demasiado. Verifica tu internet.');
+          return false;
+        }
+        return currentLoading;
+      });
+    }, 15000); // 15 seconds
+
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      clearTimeout(timeoutId);
+      // Auth state listener will handle the successful transition
+    } catch (err) {
+      clearTimeout(timeoutId);
+      console.error(err);
+      let msg = 'Error de autenticación.';
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') msg = 'Credenciales incorrectas.';
+      if (err.code === 'auth/user-not-found') msg = 'Usuario no encontrado.';
+      if (err.code === 'auth/too-many-requests') msg = 'Demasiados intentos. Intenta más tarde.';
+      setError(msg);
+      setLoading(false);
+    }
   };
 
-  const RegisterView = () => {
-    const [name, setName] = useState('');
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirm, setConfirm] = useState('');
+  // --- REGISTER LOGIC ---
+  const handleRegisterCustom = async (name, email, pass) => {
+    if (!name || !email || !pass) {
+      setError("Por favor completa todos los campos");
+      return;
+    }
 
-    const handleRegister = async (e) => {
-      e.preventDefault();
-      if (password !== confirm) return setError("Las contraseñas no coinciden");
-      setLoading(true);
-      setLoadingMessage('Creando cuenta...');
-      try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: name });
-        setCurrentView('welcome');
-      }
-      catch (err) {
-        console.error(err);
-        let msg = "Error al registrarse. Inténtalo de nuevo.";
-        if (err.code === 'auth/email-already-in-use') msg = "Este correo ya está registrado. Por favor, inicia sesión.";
-        if (err.code === 'auth/invalid-email') msg = "El correo electrónico no es válido.";
-        if (err.code === 'auth/weak-password') msg = "La contraseña debe tener al menos 6 caracteres.";
-        setError(msg);
-        setLoading(false);
-      }
-    };
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
-        <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl">
-          <h2 className="text-2xl font-bold mb-6 text-center text-gray-800">Crear Cuenta</h2>
-          <form onSubmit={handleRegister} className="space-y-4">
-            <Input label="Nombre Completo" type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ej. Juan Pérez" />
-            <Input label="Correo" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-            <Input label="Contraseña" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-            <Input label="Confirmar" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} />
-            {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-lg flex items-center gap-2 text-sm font-medium animate-fade-in border border-red-100">
-                <AlertCircle size={16} className="flex-shrink-0" />
-                {error}
-              </div>
-            )}
-            <Button type="submit" className="w-full shadow-lg" disabled={loading}>Registrarse</Button>
-          </form>
-          <div className="mt-6 text-center"><button onClick={() => setCurrentView('login')} className="text-[#4E73DF]">Volver al Login</button></div>
-          <div className="mt-8 text-center">
-            <p className="text-xs text-gray-400">© 2025 OVM Easy Apps. Todos los derechos reservados.</p>
-          </div>
-        </div>
-      </div>
-    );
+    setLoading(true);
+    setLoadingMessage('Creando cuenta...');
+    setError('');
+
+    try {
+      // 1. Create User in Auth
+      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+      const user = userCredential.user;
+
+      // 2. Update Profile
+      await updateProfile(user, { displayName: name });
+
+      // 3. Create User Doc in Firestore
+      const userRef = doc(db, "users", user.uid);
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email,
+        displayName: name,
+        createdAt: serverTimestamp(),
+        photoURL: user.photoURL
+      });
+
+      // 4. Create Personal Context
+      await setDoc(doc(db, "user_contexts", user.uid), {
+        uid: user.uid,
+        email: user.email,
+        displayName: name,
+        isPersonal: true
+      });
+
+      // 5. Navigate
+      setViewingContext({
+        uid: user.uid,
+        email: user.email,
+        name: name,
+        photoURL: user.photoURL,
+        type: 'personal'
+      });
+
+      // Navigate to dashboard
+      setCurrentView('dashboard');
+
+    } catch (err) {
+      console.error("Registration error:", err);
+      let msg = "Error al registrarse. Inténtalo de nuevo.";
+      if (err.code === 'auth/email-already-in-use') msg = "El correo ya está registrado";
+      if (err.code === 'auth/weak-password') msg = "La contraseña debe tener al menos 6 caracteres";
+      setError(msg);
+      throw new Error(msg); // Propagate
+    } finally {
+      setLoading(false);
+      setLoadingMessage('Cargando...');
+    }
   };
 
-  const WelcomeView = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-8 bg-gradient-to-br from-[#4E73DF] to-[#224abe] text-white text-center">
-      <div className="bg-white/20 p-6 rounded-full mb-8 backdrop-blur-sm shadow-2xl"><Check size={48} className="text-white" /></div>
-      <h1 className="text-4xl font-bold mb-4">¡Bienvenido!</h1>
-      <p className="text-lg text-blue-100 mb-10 max-w-xs">Tu asistente financiero personal con IA.</p>
-      <button onClick={() => setCurrentView('dashboard')} className="bg-white text-blue-600 px-8 py-4 rounded-full font-bold shadow-xl hover:shadow-2xl hover:scale-105 transition-all w-full max-w-xs">Comenzar</button>
-    </div>
-  );
 
-  const HistoryView = () => {
+
+
+  /* Extracted HistoryView */
+  const HistoryView = ({ invoices, exportToCSV, formatCurrency, setViewingInvoice, handleInvoiceClick, activeTab, setActiveTab, selectedDate, setSelectedDate, viewMode, setViewMode }) => {
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('expense'); // 'expense', 'income', 'all'
+    const [showDatePicker, setShowDatePicker] = useState(false);
 
     // viewingInvoice state moved to App level
     const filteredInvoices = invoices.filter(inv => {
@@ -1809,20 +1579,93 @@ export default function App() {
 
       const matchesType = activeTab === 'all' ? true : inv.type === activeTab;
 
-      return matchesTerm && matchesType;
+      let matchesDate = true;
+      if (viewMode !== 'all') {
+        if (!inv.fecha) {
+          matchesDate = false;
+        } else {
+          const invDate = new Date(inv.fecha);
+          matchesDate = (
+            invDate.getMonth() === selectedDate.getMonth() &&
+            invDate.getFullYear() === selectedDate.getFullYear()
+          );
+        }
+      }
+
+      return matchesTerm && matchesType && matchesDate;
     });
+
+    const changeMonth = (offset) => {
+      const newDate = new Date(selectedDate);
+      newDate.setMonth(newDate.getMonth() + offset);
+      setSelectedDate(newDate);
+      setViewMode('month');
+    };
 
     return (
       <div className="p-4 pb-24 space-y-4 animate-fade-in">
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900">Registro de Facturas</h2>
-          <button
-            onClick={() => exportToCSV(activeTab)}
-            className="p-2 bg-green-50 text-green-600 rounded-lg shadow-sm hover:bg-green-100 transition-colors"
-            title="Exportar a CSV"
-          >
-            <Download size={20} />
-          </button>
+          <h2 className="text-2xl font-bold text-gray-900">Registro</h2>
+
+          <div className="flex items-center gap-2">
+            {/* Date Picker Button */}
+            <div className="relative z-20">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center gap-1 bg-white dark:bg-gray-800 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <Calendar size={14} className="mr-1" />
+                <span className="capitalize">
+                  {viewMode === 'all' ? 'Todo' : selectedDate.toLocaleString('es-DO', { month: 'long', year: 'numeric' })}
+                </span>
+                <ChevronDown size={14} />
+              </button>
+
+              {showDatePicker && (
+                <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 p-2">
+                  <button
+                    onClick={() => { setViewMode('all'); setShowDatePicker(false); }}
+                    className={`w-full text-left text-xs p-2 rounded-lg mb-2 font-medium transition-colors flex items-center gap-2 ${viewMode === 'all' ? "bg-blue-600 text-white" : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"}`}
+                  >
+                    <Infinity size={14} />
+                    Todo el historial
+                  </button>
+                  <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+
+                  <div className="flex justify-between items-center mb-2 px-2 mt-2">
+                    <button onClick={() => changeMonth(-1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><ChevronDown className="rotate-90" size={16} /></button>
+                    <span className="text-xs font-bold text-gray-700 dark:text-gray-200">{selectedDate.getFullYear()}</span>
+                    <button onClick={() => changeMonth(1)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"><ChevronDown className="-rotate-90" size={16} /></button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => {
+                          const newD = new Date(selectedDate);
+                          newD.setMonth(i);
+                          setSelectedDate(newD);
+                          setViewMode('month');
+                          setShowDatePicker(false);
+                        }}
+                        className={`text-xs p-2 rounded-lg transition-colors ${i === selectedDate.getMonth() && viewMode === 'month' ? "bg-blue-600 text-white font-bold" : "hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"}`}
+                      >
+                        {new Date(0, i).toLocaleString('es-DO', { month: 'short' })}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={() => exportToCSV(activeTab)}
+              className="p-2 bg-green-50 text-green-600 rounded-lg shadow-sm hover:bg-green-100 transition-colors"
+              title="Exportar a CSV"
+            >
+              <Download size={20} />
+            </button>
+          </div>
         </div>
 
         <TabSwitch
@@ -1837,7 +1680,7 @@ export default function App() {
 
         <div className="relative shadow-sm">
           <Search className="absolute left-3 top-3 text-gray-400" size={20} />
-          <input type="text" placeholder="Buscar por nombre, NCF, monto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#4E73DF] outline-none transition-all" />
+          <input type="text" placeholder="Buscar por nombre, NCF, monto..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="w-full pl-10 pr-4 py-3 border border-gray-200 dark:border-gray-700 rounded-xl focus:ring-2 focus:ring-[#4E73DF] outline-none transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400" />
         </div>
         <div className="space-y-3">
           {filteredInvoices.length === 0 ? (
@@ -1846,21 +1689,21 @@ export default function App() {
             filteredInvoices.map((inv) => (
               <div
                 key={inv.id}
-                className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col gap-2 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col gap-2 hover:shadow-md transition-shadow"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-center gap-3">
                     <div className="bg-blue-50 p-2 rounded-lg text-blue-600"><FileText size={20} /></div>
                     <div>
-                      <p className="font-bold text-gray-800 text-sm truncate max-w-[150px]">{inv.nombre_negocio || 'Desconocido'}</p>
-                      <p className="text-xs text-gray-500">{inv.fecha || 'Sin fecha'}</p>
+                      <p className="font-bold text-gray-800 dark:text-white text-sm truncate max-w-[150px]">{inv.nombre_negocio || 'Desconocido'}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{inv.fecha || 'Sin fecha'}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={`font-bold ${inv.type === 'income' ? 'text-green-600' : 'text-gray-800'}`}>
+                    <p className={`font-bold ${inv.type === 'income' ? 'text-green-600' : 'text-gray-800 dark:text-gray-200'}`}>
                       {inv.type === 'income' ? '+' : ''}{formatCurrency(inv.total)}
                     </p>
-                    <p className="text-[10px] text-gray-400 font-medium mb-1">ITBIS: {formatCurrency((parseFloat(inv.itbis18 || inv.itbis || 0) + parseFloat(inv.itbis16 || 0)))}</p>
+                    <p className="text-xs text-gray-400 font-medium mb-1">ITBIS: {formatCurrency((parseFloat(inv.itbis18 || inv.itbis || 0) + parseFloat(inv.itbis16 || 0)))}</p>
                     <span className={`text-[10px] px-2 py-0.5 rounded uppercase ${inv.type === 'income' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
                       {inv.categoria || 'Otro'}
                     </span>
@@ -1902,7 +1745,7 @@ export default function App() {
         {/* Header con Contexto */}
         <div className="flex justify-between items-center">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white flex items-center gap-2">
               {viewingContext?.type === 'personal' && (
                 <Avatar name={viewingContext.name} url={viewingContext.photoURL} size="md" />
               )}
@@ -1916,7 +1759,7 @@ export default function App() {
               )}
             </p>
           </div>
-          <button onClick={() => setCurrentView('settings')} className="p-2 bg-white rounded-full shadow-sm text-gray-600 relative hover:bg-gray-50 transition-colors">
+          <button onClick={() => setCurrentView('settings')} className="p-2 bg-white dark:bg-gray-800 rounded-full shadow-sm text-gray-600 dark:text-gray-300 relative hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
             <Settings size={20} />
           </button>
         </div>
@@ -1970,7 +1813,7 @@ export default function App() {
         </Card>
 
         <div>
-          <h3 className="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2"><FileText size={18} /> Recientes</h3>
+          <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 mb-3 flex items-center gap-2"><FileText size={18} /> Recientes</h3>
           {recentInvoices.length === 0 ? (
             <div className="text-center py-12 text-gray-400 bg-white/60 rounded-xl border-2 border-dashed border-gray-200">
               <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -1985,7 +1828,7 @@ export default function App() {
                 <div
                   key={inv.id}
                   onClick={() => handleInvoiceClick(inv)}
-                  className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center hover:shadow-md transition-all cursor-pointer"
+                  className="bg-white dark:bg-gray-800 p-4 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex justify-between items-center hover:shadow-md transition-all cursor-pointer"
                 >
                   <div className="flex items-center gap-3">
 
@@ -2003,72 +1846,17 @@ export default function App() {
     );
   };
 
-  const StatsView = () => {
-    const [activeTab, setActiveTab] = useState('expense');
-    const currentStats = stats[activeTab];
-    const sortedCategories = Object.entries(currentStats.byCategory).sort(([, a], [, b]) => b - a);
 
-    return (
-      <div className="p-4 pb-24 space-y-6 animate-fade-in">
-        <h2 className="text-2xl font-bold text-gray-900">Estadísticas</h2>
-
-        <TabSwitch
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          tabs={[
-            { id: 'expense', label: 'GASTOS', color: 'blue' },
-            { id: 'income', label: 'INGRESOS', color: 'green' }
-          ]}
-        />
-
-        <Card className={`border-t-4 ${activeTab === 'expense' ? 'border-t-[#4E73DF]' : 'border-t-green-500'}`}>
-          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <PieChart size={18} className={activeTab === 'expense' ? 'text-[#4E73DF]' : 'text-green-500'} />
-            Por Categoría
-          </h3>
-          {sortedCategories.length === 0 ? (
-            <div className="text-center py-12 text-gray-400 bg-gray-50 rounded-xl border border-dashed">
-              <PieChart size={48} className="mx-auto mb-2 opacity-20" />
-              <p>No hay datos de {activeTab === 'expense' ? 'gastos' : 'ingresos'} para mostrar.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {sortedCategories.map(([cat, amount], index) => {
-                const percentage = (amount / currentStats.total) * 100;
-                return (
-                  <div key={cat}>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="font-medium text-gray-700">{cat}</span>
-                      <span className="text-gray-500 font-medium">{formatCurrency(amount)} ({percentage.toFixed(0)}%)</span>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-3 overflow-hidden shadow-inner">
-                      <div
-                        className="h-3 rounded-full transition-all duration-500"
-                        style={{
-                          width: `${percentage}%`,
-                          backgroundColor: activeTab === 'expense' ? COLORS.chart[index % COLORS.chart.length] : (index % 2 === 0 ? '#10B981' : '#34D399')
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
-      </div>
-    );
-  };
 
   const ScanView = () => {
     const [activeTab, setActiveTab] = useState('expense');
 
     return (
-      <div className="h-full flex flex-col p-6 animate-fade-in">
+      <div className="h-full flex flex-col p-6 animate-fade-in bg-white dark:bg-gray-900">
         {viewingContext.type === 'shared' && (
           <div className="bg-orange-100 text-orange-800 p-3 rounded-lg mb-4 text-xs text-center font-bold shadow-sm">⚠️ Estás en modo colaborador. No puedes subir facturas aquí.</div>
         )}
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Capturar {activeTab === 'expense' ? 'Documento' : 'Ingreso'}</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Capturar {activeTab === 'expense' ? 'Documento' : 'Ingreso'}</h2>
 
         <TabSwitch
           activeTab={activeTab}
@@ -2103,7 +1891,7 @@ export default function App() {
             <span className="h-px bg-gray-300 w-12"></span><span className="text-gray-400 text-sm font-medium">O subir archivo</span><span className="h-px bg-gray-300 w-12"></span>
           </div>
 
-          <label className="flex flex-col items-center justify-center h-32 bg-white border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50 hover:shadow-md transition-all">
+          <label className="flex flex-col items-center justify-center h-32 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-md transition-all">
             <input
               type="file"
               accept="image/*"
@@ -2113,7 +1901,7 @@ export default function App() {
               }}
               className="hidden"
             />
-            <Upload size={28} className="text-gray-400 mb-2" />
+            <Upload size={28} className="text-gray-400" />
             <p className="text-gray-500 text-sm font-medium">Galería de Imágenes</p>
           </label>
 
@@ -2163,39 +1951,28 @@ export default function App() {
       };
     });
 
+    const [isEditing, setIsEditing] = useState(currentInvoice.isEditMode || !formData.id); // Check explicit edit flag first
+
     const handleChange = (e) => {
       const { name, value } = e.target;
       setFormData(prev => {
         const newData = { ...prev, [name]: value };
-
-        // Auto-calculate DOP total if USD fields change
         if (prev.moneda === 'USD' && (name === 'original_total' || name === 'tasa_cambio')) {
           const amount = parseFloat(name === 'original_total' ? value : prev.original_total) || 0;
           const rate = parseFloat(name === 'tasa_cambio' ? value : prev.tasa_cambio) || 0;
-          if (amount && rate) {
-            // Force 2 decimal places for the calculated total
-            newData.total = (amount * rate).toFixed(2);
-          }
+          if (amount && rate) newData.total = (amount * rate).toFixed(2);
         }
-
-        // Reset if switching to DOP
         if (name === 'moneda' && value === 'DOP') {
           newData.original_total = '';
           newData.tasa_cambio = '';
-          // Keep the current total as the main total
         }
-
         return newData;
       });
     };
 
-    // Obtener nombres de negocios únicos para autocompletar
     const uniqueBusinesses = [...new Set(invoices.map(inv => inv.nombre_negocio).filter(Boolean))];
-
     const isCaptured = !!(currentInvoice.file || currentInvoice.image);
-    const isManualEntry = !formData.id && !isCaptured;
 
-    // Lógica para autocompletar nombre de negocio al perder foco en RNC
     const handleRncBlur = () => {
       if (formData.rnc) {
         const foundInvoice = invoices.find(inv => inv.rnc === formData.rnc && inv.nombre_negocio);
@@ -2205,145 +1982,185 @@ export default function App() {
       }
     };
 
-    return (
-      <div className="p-4 pb-24 animate-fade-in">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">
-          {formData.id ? 'Editar Registro' : (isCaptured ? 'Datos Capturados' : `Registro Manual (${formData.type === 'income' ? 'Ingreso' : 'Gasto'})`)}
-        </h2>
+    const handleClose = () => {
+      // Simple logic: if has ID via History likely, else Dashboard
+      setCurrentView('history');
+    };
 
-        <TabSwitch
-          activeTab={formData.type}
-          onTabChange={(type) => setFormData(prev => ({ ...prev, type }))}
-          tabs={[
-            { id: 'expense', label: 'GASTOS', color: 'blue' },
-            { id: 'income', label: 'INGRESOS', color: 'green' }
-          ]}
+    // --- VIEW MODE (NUEVO DISEÑO) ---
+    if (!isEditing) {
+      return (
+        <InvoiceDetailModal
+          invoice={formData}
+          onClose={handleClose}
+          onEdit={() => setIsEditing(true)}
+          onDelete={() => handleDeleteInvoice(formData.id)}
         />
+      );
+    }
 
-        <Card className={`border-t-4 ${formData.type === 'expense' ? 'border-t-[#4E73DF]' : 'border-t-green-500'}`}>
-          <form className="space-y-4">
-            <div className="space-y-4">
-              <datalist id="business-names">
-                {uniqueBusinesses.map((name, index) => (
-                  <option key={index} value={name} />
-                ))}
-              </datalist>
+    // --- FORM VIEW (NUEVO DISEÑO) ---
+    return (
+      <div className="p-4 pb-24 animate-fade-in bg-gray-50 dark:bg-gray-900 min-h-screen">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <button onClick={() => setCurrentView('history')} className="p-2 -ml-2 hover:bg-white dark:hover:bg-gray-800 rounded-full transition-colors text-gray-600 dark:text-gray-300">
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Editar Factura</h2>
+          <button className="p-2 -mr-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <HelpCircle size={24} />
+          </button>
+        </div>
 
-              <Input
-                label="RNC"
+        {/* Tab Switcher */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-1 mb-6 shadow-sm border border-gray-100 dark:border-gray-700 flex">
+          {(!formData.id || formData.type === 'expense') && (
+            <button
+              onClick={() => !formData.id && setFormData(p => ({ ...p, type: 'expense' }))}
+              disabled={!!formData.id}
+              className={`flex-1 py-1.5 text-sm font-bold rounded-xl transition-all ${formData.type === 'expense' ? 'bg-[#4F46E5] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              Gastos
+            </button>
+          )}
+          {(!formData.id || formData.type === 'income') && (
+            <button
+              onClick={() => !formData.id && setFormData(p => ({ ...p, type: 'income' }))}
+              disabled={!!formData.id}
+              className={`flex-1 py-1.5 text-sm font-bold rounded-xl transition-all ${formData.type === 'income' ? 'bg-[#10B981] text-white shadow-sm' : 'text-gray-500 hover:bg-gray-50'}`}
+            >
+              Ingresos
+            </button>
+          )}
+        </div>
+
+        {/* Total Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 mb-8 relative overflow-hidden">
+          {/* Background Decoration */}
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-32 h-32 bg-blue-50 dark:bg-blue-900/10 rounded-full blur-2xl opacity-50"></div>
+
+          <div className="relative z-10">
+            <label className="block text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-1">Monto Total</label>
+            <div className="flex items-center gap-1 mb-2">
+              <span className="text-2xl font-bold text-gray-400 dark:text-gray-500">$</span>
+              <input
+                type="number"
+                name="total"
+                value={formData.total || ''}
+                onChange={handleChange}
+                className="w-full text-5xl font-black text-gray-900 dark:text-white bg-transparent outline-none placeholder-gray-200 dark:placeholder-gray-700"
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="flex justify-between items-end">
+              <div>
+                <span className="text-xs text-gray-400 font-medium">Monto Neto: </span>
+                <span className="text-xs font-bold text-gray-700 dark:text-gray-300">
+                  {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || formData.itbis || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
+                </span>
+              </div>
+
+              {/* Currency Toggle */}
+              <div className="flex bg-indigo-50 rounded-lg p-1">
+                <button
+                  type="button"
+                  onClick={() => handleChange({ target: { name: 'moneda', value: 'DOP' } })}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${formData.moneda !== 'USD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-400 hover:text-indigo-600'}`}
+                >
+                  DOP
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleChange({ target: { name: 'moneda', value: 'USD' } })}
+                  className={`px-3 py-1 rounded-md text-[10px] font-bold transition-all ${formData.moneda === 'USD' ? 'bg-white text-indigo-600 shadow-sm' : 'text-indigo-400 hover:text-indigo-600'}`}
+                >
+                  USD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-4 pl-1">Detalles de Factura</h3>
+
+        <div className="space-y-3">
+          <datalist id="business-names">
+            {uniqueBusinesses.map((name, index) => (
+              <option key={index} value={name} />
+            ))}
+          </datalist>
+
+          {/* RNC */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+            <div className="text-gray-400"><Hash size={20} /></div>
+            <div className="flex-1">
+              <input
+                type="text"
                 name="rnc"
                 value={formData.rnc || ''}
                 onChange={handleChange}
                 onBlur={handleRncBlur}
+                placeholder="RNC"
+                className="w-full text-sm font-medium text-gray-900 dark:text-white bg-transparent outline-none placeholder:text-gray-400"
               />
-              <Input label="NCF" name="ncf" value={formData.ncf || ''} onChange={handleChange} placeholder="B01..." />
-              <Input
-                label={formData.type === 'income' ? "Cliente / Fuente" : "Nombre Negocio"}
+            </div>
+          </div>
+
+          {/* NCF */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+            <div className="text-gray-400"><FileText size={20} /></div>
+            <div className="flex-1">
+              <input
+                type="text"
+                name="ncf"
+                value={formData.ncf || ''}
+                onChange={handleChange}
+                placeholder="NCF (e.g. B01...)"
+                className="w-full text-sm font-medium text-gray-900 dark:text-white bg-transparent outline-none placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          {/* Business Name */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center gap-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+            <div className="text-gray-400"><Store size={20} /></div>
+            <div className="flex-1">
+              <input
+                type="text"
                 name="nombre_negocio"
                 value={formData.nombre_negocio || ''}
                 onChange={handleChange}
                 list="business-names"
-                placeholder="Escribe o selecciona..."
+                placeholder="Nombre del Negocio"
+                className="w-full text-sm font-medium text-gray-900 dark:text-white bg-transparent outline-none placeholder:text-gray-400"
               />
-              <Input label="Fecha" name="fecha" value={formData.fecha || ''} onChange={handleChange} type="date" />
+            </div>
+          </div>
+
+          {/* Date & Category Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 flex items-center gap-2 shadow-sm">
+              <div className="text-blue-500 bg-blue-50 dark:bg-blue-900/20 p-1.5 rounded-lg"><Calendar size={16} /></div>
+              <input
+                type="date"
+                name="fecha"
+                value={formData.fecha || ''}
+                onChange={handleChange}
+                className="w-full text-sm font-medium text-gray-700 dark:text-gray-200 outline-none bg-transparent"
+              />
             </div>
 
-            <div className="my-6 border-t border-b border-gray-100 py-4 bg-gray-50 -mx-5 px-5">
-              {/* Currency Selection */}
-              <div className="mb-4 px-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Moneda</label>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleChange({ target: { name: 'moneda', value: 'DOP' } })}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors border ${formData.moneda === 'DOP' ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    🇩🇴 DOP (Peso)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleChange({ target: { name: 'moneda', value: 'USD' } })}
-                    className={`flex-1 py-2 rounded-lg text-sm font-bold transition-colors border ${formData.moneda === 'USD' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50'}`}
-                  >
-                    🇺🇸 USD (Dólar)
-                  </button>
-                </div>
-              </div>
-
-              {formData.moneda === 'USD' && (
-                <div className="grid grid-cols-2 gap-4 mb-4 px-2 animate-fade-in">
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Monto USD</label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2 text-gray-400 font-bold">$</span>
-                      <input
-                        type="number"
-                        name="original_total"
-                        value={formData.original_total || ''}
-                        onChange={handleChange}
-                        className="w-full pl-6 pr-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                        placeholder="0.00"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Tasa Cambio</label>
-                    <input
-                      type="number"
-                      name="tasa_cambio"
-                      value={formData.tasa_cambio || ''}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 outline-none"
-                      placeholder="Ej: 60.50"
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="mb-4">
-                <label className="block text-sm font-bold text-gray-700 mb-1">Monto Total</label>
-                <div className="relative">
-                  <span className="absolute left-4 top-3 text-gray-500 font-bold">$</span>
-                  <input
-                    type="number"
-                    name="total"
-                    value={formData.total ? parseFloat(formData.total).toFixed(2) : ''}
-                    onChange={handleChange}
-                    readOnly={formData.moneda === 'USD'}
-                    className={`w-full pl-8 pr-4 py-3 border rounded-xl focus:ring-2 outline-none text-xl font-bold text-gray-800 bg-white ${formData.moneda === 'USD' ? 'bg-gray-50 text-gray-500' : (formData.type === 'expense' ? 'border-blue-200 focus:ring-blue-500' : 'border-green-200 focus:ring-green-500')}`}
-                    placeholder="0.00"
-                  />
-                </div>
-              </div>
-
-              {/* Monto Neto Calculado */}
-              <div className="mb-4 flex justify-between items-center px-2">
-                <span className="text-sm font-medium text-gray-600">Monto Neto:</span>
-                <span className="font-bold text-gray-800">
-                  {formatCurrency((parseFloat(formData.total || 0) - parseFloat(formData.itbis18 || 0) - parseFloat(formData.itbis16 || 0) - parseFloat(formData.propina || 0)))}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (18%)</label>
-                  <input type="number" name="itbis18" value={formData.itbis18 !== undefined ? formData.itbis18 : ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">ITBIS (16%)</label>
-                  <input type="number" name="itbis16" value={formData.itbis16 || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Propina</label>
-                  <input type="number" name="propina" value={formData.propina || ''} onChange={handleChange} className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm" placeholder="0.00" />
-                </div>
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select name="categoria" value={formData.categoria || ''} onChange={handleChange} className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-                <option value="">Seleccionar Categoría</option>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 flex items-center gap-2 shadow-sm relative">
+              <div className="text-orange-500 bg-orange-50 dark:bg-orange-900/20 p-1.5 rounded-lg"><LayoutGrid size={16} /></div>
+              <select
+                name="categoria"
+                value={formData.categoria || ''}
+                onChange={handleChange}
+                className="w-full text-sm font-medium text-gray-700 dark:text-gray-200 outline-none bg-transparent appearance-none relative z-10"
+              >
+                <option value="">Categoría</option>
                 {formData.type === 'expense' ? (
                   <>
                     <option value="Alimentación">Alimentación</option>
@@ -2352,8 +2169,7 @@ export default function App() {
                     <option value="Salud">Salud</option>
                     <option value="Combustible">Combustible</option>
                     <option value="Ocio">Ocio</option>
-                    <option value="Autocuidado">Autocuidado</option>
-                    <option value="Educación">Educación</option>
+                    <option value="Compras">Compras</option>
                     <option value="Hogar">Hogar</option>
                     <option value="Otros">Otros</option>
                   </>
@@ -2361,56 +2177,87 @@ export default function App() {
                   <>
                     <option value="Salario">Salario</option>
                     <option value="Freelance">Freelance</option>
-                    <option value="Asesorías">Asesorías</option>
-                    <option value="Venta de Artículos">Venta de Artículos</option>
-                    <option value="Ventas varias">Ventas varias</option>
-                    <option value="Alquiler">Alquiler</option>
+                    <option value="Inversiones">Inversiones</option>
+                    <option value="Regalos">Regalos</option>
                     <option value="Otros">Otros</option>
                   </>
                 )}
               </select>
+              <ChevronDown size={14} className="absolute right-3 text-gray-400" />
             </div>
+          </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción (Opcional)</label>
-              <textarea
-                name="descripcion"
-                value={formData.descripcion || ''}
+          {/* Tax & Tip Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 flex items-center gap-2 shadow-sm">
+              <span className="text-[10px] font-bold text-gray-400 uppercase">ITBIS(18%)</span>
+              <input
+                type="number"
+                name="itbis18"
+                value={formData.itbis18 !== undefined ? formData.itbis18 : ''}
                 onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 outline-none h-24 resize-none"
-                placeholder="Detalles adicionales..."
+                placeholder="0.00"
+                className="w-full text-sm font-bold text-gray-900 dark:text-white outline-none text-right placeholder:font-normal bg-transparent"
               />
             </div>
-
-            <div className="pt-4 flex flex-col gap-3">
-              <div className="flex gap-3">
-                {!formData.id && <Button variant="ghost" onClick={() => setCurrentView('scan')} className="flex-1">Reintentar</Button>}
-                {formData.id && <Button variant="ghost" onClick={() => setCurrentView('history')} className="flex-1">Cancelar</Button>}
-                <Button onClick={() => handleSaveInvoice(formData)} className="flex-[2] shadow-lg">
-                  {formData.id ? 'Actualizar' : 'Guardar'}
-                </Button>
-              </div>
-
-              {formData.id && (
-                <button
-                  type="button"
-                  onClick={() => handleDeleteInvoice(formData.id)}
-                  className="w-full text-red-500 text-sm font-medium py-2 hover:bg-red-50 rounded-lg transition-colors flex items-center justify-center gap-2"
-                >
-                  <Trash2 size={16} /> Eliminar Factura
-                </button>
-              )}
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 flex items-center gap-2 shadow-sm">
+              <span className="text-[10px] font-bold text-gray-400 uppercase">Propina</span>
+              <input
+                type="number"
+                name="propina"
+                value={formData.propina || ''}
+                onChange={handleChange}
+                placeholder="0.00"
+                className="w-full text-sm font-bold text-gray-900 dark:text-white outline-none text-right placeholder:font-normal bg-transparent"
+              />
             </div>
-          </form>
-        </Card>
-      </div>
+          </div>
+
+          {/* Description */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 shadow-sm">
+            <textarea
+              name="descripcion"
+              value={formData.descripcion || ''}
+              onChange={handleChange}
+              className="w-full text-sm text-gray-700 dark:text-gray-200 outline-none min-h-[80px] resize-none placeholder:text-gray-400 bg-transparent"
+              placeholder="Descripción (Opcional)"
+            />
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="fixed bottom-6 left-4 right-4 z-20">
+          <button
+            onClick={() => handleSaveInvoice(formData)}
+            disabled={loading}
+            className="w-full bg-[#4F46E5] text-white py-4 rounded-2xl shadow-xl shadow-indigo-200 font-bold text-lg flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+          >
+            {loading ? <Loader2 className="animate-spin" /> : <Save size={20} />}
+            {formData.id ? 'Guardar Cambios' : 'Guardar Factura'}
+          </button>
+        </div>
+      </div >
     );
   };
 
-  if (loading && currentView === 'login') return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
-  if (currentView === 'login') return <LoginView />;
-  if (currentView === 'register') return <RegisterView />;
-  if (currentView === 'welcome') return <WelcomeView />;
+
+  if (currentView === 'login') return <LoginView onLogin={handleLoginAction} onNavigate={setCurrentView} loading={loading} error={error} />;
+  if (currentView === 'register') return (
+    <RegisterView
+      onRegister={async (e, name, email, password, redirect) => {
+        if (redirect === 'login') {
+          setCurrentView('login');
+          return;
+        }
+        // Logic handled inside handling but we need to pass the registration function wrapper
+        // Actually I should wrap handleRegister to match the signature or update handleRegister
+        // Adapting handleRegister to accept arguments directly instead of event target
+        await handleRegisterCustom(name, email, password);
+      }}
+      loading={loading}
+    />
+  );
+  if (currentView === 'welcome') return <WelcomeView onNavigate={setCurrentView} installPrompt={installPrompt} onInstall={handleInstallClick} />;
 
   // Safety check: If we are in a protected view but viewingContext is not ready, show loader
   if (!viewingContext && currentView !== 'login' && currentView !== 'register') {
@@ -2418,7 +2265,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 font-sans text-gray-900 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
+    <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 font-sans text-gray-900 dark:text-gray-100 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
       <DuplicateModal
         duplicateData={duplicateWarning}
         onCancel={() => {
@@ -2460,21 +2307,43 @@ export default function App() {
         <InvoiceDetailModal
           invoice={viewingInvoice}
           onClose={() => setViewingInvoice(null)}
+          onEdit={() => {
+            setViewingInvoice(null);
+            handleInvoiceClick(viewingInvoice);
+          }}
+          onDelete={() => {
+            setViewingInvoice(null);
+            handleDeleteInvoice(viewingInvoice.id);
+          }}
         />
       )}
 
-      <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext?.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 backdrop-blur-md'}`}>
-        <div className="flex items-center gap-2">
-          <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext?.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
-          <span className={`font-bold text-xl tracking-tight ${viewingContext?.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF]'}`}>FacturIA</span>
-        </div>
-      </header>
+      {currentView !== 'settings' && (
+        <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext?.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md dark:border-b dark:border-gray-800'}`}>
+          <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext?.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
+            <span className={`font-bold text-xl tracking-tight ${viewingContext?.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF] dark:text-blue-400'}`}>FacturIA</span>
+          </div>
+        </header>
+      )}
 
       <main className="flex-1 overflow-y-auto scrollbar-hide">
         {currentView === 'dashboard' && <DashboardView />}
 
-        {currentView === 'history' && <HistoryView />}
-        {currentView === 'stats' && <StatsView />}
+        {currentView === 'history' && <HistoryView
+          invoices={invoices}
+          exportToCSV={exportToCSV}
+          formatCurrency={formatCurrency}
+          setViewingInvoice={setViewingInvoice}
+          handleInvoiceClick={handleInvoiceClick}
+          activeTab={historyActiveTab}
+          setActiveTab={setHistoryActiveTab}
+          selectedDate={historySelectedDate}
+          setSelectedDate={setHistorySelectedDate}
+          viewMode={historyViewMode}
+          setViewMode={setHistoryViewMode}
+        />}
+        {currentView === 'stats' && <StatsView invoices={invoices} />}
         {currentView === 'scan' && <ScanView />}
         {currentView === 'verify' && <VerifyView />}
         {currentView === 'settings' && <SettingsView
@@ -2495,6 +2364,8 @@ export default function App() {
           onDeleteCompany={handleDeleteCompany}
           onUpdateCompany={handleUpdateCompany}
           onSeedOVM={handleSeedOVM}
+          darkMode={darkMode}
+          toggleDarkMode={toggleDarkMode}
         />}
       </main>
 
@@ -2522,20 +2393,20 @@ export default function App() {
       )}
 
       {/* Navigation Bar */}
-      <nav className="bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center z-40 pb-safe">
-        <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+      <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-40 pb-safe">
+        <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
           <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
         </button>
-        <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+        <button onClick={() => setCurrentView('history')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'history' ? 'text-[#4E73DF] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
           <Search size={22} /><span className="text-[10px] font-bold mt-1">Buscar</span>
         </button>
-        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext?.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
+        <button onClick={() => setCurrentView('scan')} className={`flex flex-col items-center justify-center -mt-8 text-white rounded-full w-14 h-14 shadow-lg ring-4 ring-[#F8F9FC] dark:ring-gray-900 active:scale-95 transition-transform bg-gradient-to-r from-[#4E73DF] to-[#224abe] hover:shadow-xl ${viewingContext?.type === 'shared' ? 'from-orange-400 to-orange-500 opacity-50 cursor-not-allowed' : ''}`}>
           <Camera size={24} />
         </button>
-        <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+        <button onClick={() => setCurrentView('stats')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'stats' ? 'text-[#4E73DF] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
           <PieChart size={22} /><span className="text-[10px] font-bold mt-1">Stats</span>
         </button>
-        <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] bg-blue-50' : 'text-gray-400 hover:text-gray-600'}`}>
+        <button onClick={() => setCurrentView('settings')} className={`flex flex-col items-center p-2 rounded-xl transition-all relative ${currentView === 'settings' ? 'text-[#4E73DF] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
           <Settings size={22} /><span className="text-[10px] font-bold mt-1">Ajustes</span>
         </button>
       </nav>
