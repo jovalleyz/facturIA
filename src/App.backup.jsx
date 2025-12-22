@@ -2316,7 +2316,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 font-sans text-gray-900 dark:text-gray-100 relative max-w-md mx-auto shadow-2xl flex flex-col">
+    <div className="h-[100dvh] bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800 font-sans text-gray-900 dark:text-gray-100 relative max-w-md mx-auto shadow-2xl overflow-hidden flex flex-col">
       <DuplicateModal
         duplicateData={duplicateWarning}
         onCancel={() => {
@@ -2370,7 +2370,7 @@ export default function App() {
       )}
 
       {currentView !== 'settings' && (
-        <header className={`fixed top-0 left-0 right-0 max-w-md mx-auto px-4 py-4 shadow-sm z-40 flex items-center justify-between transition-colors ${viewingContext?.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/95 dark:bg-gray-900/95 backdrop-blur-md dark:border-b dark:border-gray-800'}`}>
+        <header className={`px-4 py-4 shadow-sm z-30 flex items-center justify-between transition-colors flex-shrink-0 ${viewingContext?.type === 'shared' ? 'bg-orange-50 border-b border-orange-200' : 'bg-white/90 dark:bg-gray-900/90 backdrop-blur-md dark:border-b dark:border-gray-800'}`}>
           <div className="flex items-center gap-2">
             <div className={`p-1.5 rounded-lg text-white shadow-sm ${viewingContext?.type === 'shared' ? 'bg-orange-500' : 'bg-[#4E73DF]'}`}><FileText size={18} /></div>
             <span className={`font-bold text-xl tracking-tight ${viewingContext?.type === 'shared' ? 'text-orange-600' : 'text-[#4E73DF] dark:text-blue-400'}`}>FacturIA</span>
@@ -2378,7 +2378,7 @@ export default function App() {
         </header>
       )}
 
-      <main className={`flex-1 ${currentView !== 'settings' ? 'pt-20 pb-24' : 'pb-6'}`}>
+      <main className="flex-1 overflow-y-auto scrollbar-hide">
         {currentView === 'dashboard' && <DashboardView />}
 
         {currentView === 'history' && <HistoryView
@@ -2444,7 +2444,7 @@ export default function App() {
       )}
 
       {/* Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-40 pb-safe">
+      <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-3 flex justify-between items-center z-40 pb-safe">
         <button onClick={() => setCurrentView('dashboard')} className={`flex flex-col items-center p-2 rounded-xl transition-all ${currentView === 'dashboard' ? 'text-[#4E73DF] dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'}`}>
           <Home size={22} /><span className="text-[10px] font-bold mt-1">Inicio</span>
         </button>
