@@ -1005,9 +1005,12 @@ export default function App() {
 
         const amount = parseFloat(data.total || 0);
 
-        // Calculate ITBIS
-        const itbis18 = parseFloat(data.itbis18 || data.itbis || 0);
-        const itbis16 = parseFloat(data.itbis16 || 0);
+        // Calculate ITBIS - Force Number type to prevent string concatenation
+        let itbis18 = parseFloat(data.itbis18);
+        if (isNaN(itbis18)) itbis18 = parseFloat(data.itbis);
+        if (isNaN(itbis18)) itbis18 = 0;
+
+        const itbis16 = parseFloat(data.itbis16) || 0;
         const totalItbis = itbis18 + itbis16;
 
         // Update Stats
@@ -1028,6 +1031,33 @@ export default function App() {
       });
 
       setInvoices(docs);
+
+      // AUTO-DEPRECATION/FIX: Check for corrupted ITBIS (due to previous concatenation bug)
+      // Detect anomalies where Itbis > Total, which is impossible.
+      const corruptedDocs = docs.filter(d => {
+        const t = parseFloat(d.total || 0);
+        const i = parseFloat(d.itbis18 || d.itbis || 0) + parseFloat(d.itbis16 || 0);
+        return i > t && t > 0;
+      });
+
+      if (corruptedDocs.length > 0) {
+        console.log("Found corrupted docs:", corruptedDocs.length);
+        corruptedDocs.forEach(async (d) => {
+          try {
+            console.log("Fixing doc:", d.id);
+            const saneItbis = (parseFloat(d.total) - (parseFloat(d.total) / 1.18)); // Extract 18% approx
+            const ref = doc(db, "invoices", d.id);
+            await updateDoc(ref, {
+              itbis18: saneItbis,
+              itbis: saneItbis // Update legacy field too to be safe
+            });
+            console.log("Fixed.");
+          } catch (e) {
+            console.error("Error auto-fixing doc:", e);
+          }
+        });
+        // Silent update - next fetch will show correct data
+      }
       setStats(newStats);
     } catch (err) {
       console.error("Error fetching invoices:", err);
@@ -1291,12 +1321,25 @@ export default function App() {
 
         await updateDoc(invoiceRef, {
           ...dataToUpdate,
+          // Ensure numbers
+          total: parseFloat(dataToUpdate.total || 0),
+          itbis18: parseFloat(dataToUpdate.itbis18 || 0),
+          itbis16: parseFloat(dataToUpdate.itbis16 || 0),
+          propina: parseFloat(dataToUpdate.propina || 0),
           updatedAt: serverTimestamp()
         });
       } else {
         const docData = {
           userId: viewingContext.uid,
           ...validatedData,
+          // Ensure numbers are numbers
+          total: parseFloat(validatedData.total || 0),
+          itbis18: parseFloat(validatedData.itbis18 || 0),
+          itbis16: parseFloat(validatedData.itbis16 || 0),
+          propina: parseFloat(validatedData.propina || 0),
+          // Clean undefineds
+          rnc: validatedData.rnc || '',
+          ncf: validatedData.ncf || '',
           createdAt: serverTimestamp(),
           status: 'completed',
           type: validatedData.type || 'expense'
@@ -1803,8 +1846,16 @@ export default function App() {
           </div>
 
           <div className="relative z-10 flex justify-between items-end">
-            <div><p className="text-white/80 text-xs font-medium uppercase mb-1 tracking-wider">Total {activeTab === 'expense' ? 'Gastado' : 'Ingresado'}</p><h3 className="text-4xl font-bold">{formatCurrency(currentStats.total)}</h3></div>
-            <div className="bg-white/20 p-2.5 rounded-xl backdrop-blur-md border border-white/10"><TrendingUp size={28} className="text-white" /></div>
+            <div>
+              <p className="text-white/80 text-xs font-medium uppercase mb-1 tracking-wider">Total {activeTab === 'expense' ? 'Gastado' : 'Ingresado'}</p>
+              <h3 className="text-4xl font-bold">
+                {currentStats.total > 100000
+                  ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', notation: "compact", maximumFractionDigits: 1 }).format(currentStats.total).replace('$', 'RD$')
+                  : formatCurrency(currentStats.total)
+                }
+              </h3>
+            </div>
+            {/* Icono eliminado para ahorrar espacio en móvil */}
           </div>
           <div className="relative z-10 mt-6 pt-4 border-t border-white/20 flex justify-between text-sm text-white/90">
             <div className="flex items-center gap-1"><FileText size={14} /> <span>{currentStats.count} Registros</span></div>
