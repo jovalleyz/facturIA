@@ -210,11 +210,11 @@ const StatsView = ({ invoices = [] }) => {
                 <div className="relative">
                     <button
                         onClick={() => setShowDatePicker(!showDatePicker)}
-                        className="flex items-center gap-1 bg-white dark:bg-gray-800 px-4 py-2 rounded-full text-xs font-semibold shadow-sm border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center gap-1 bg-white dark:bg-gray-800 px-3 py-2 rounded-full text-xs font-semibold shadow-sm border border-gray-100 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors whitespace-nowrap"
                     >
                         <Calendar size={14} className="mr-1" />
                         <span className="capitalize">
-                            {viewMode === 'all' ? 'Todo el historial' : selectedDate.toLocaleString('es-DO', { month: 'long', year: 'numeric' })}
+                            {viewMode === 'all' ? 'Todo' : selectedDate.toLocaleString('es-DO', { month: 'long', year: 'numeric' })}
                         </span>
                         <ChevronDown size={16} />
                     </button>
