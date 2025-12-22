@@ -114,7 +114,7 @@ const SettingsView = ({
     return (
         <div className="bg-background-light dark:bg-background-dark text-text-main-light dark:text-text-main-dark font-sans transition-colors duration-300 min-h-screen pb-24">
             {/* Header */}
-            <header className="px-6 pt-12 pb-4 flex justify-between items-center bg-white dark:bg-surface-dark sticky top-0 z-10 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 shadow-sm">
+            <header className="px-6 pt-12 pb-4 flex justify-between items-center bg-white dark:bg-surface-dark sticky top-0 z-50 backdrop-blur-md bg-opacity-90 dark:bg-opacity-90 shadow-sm">
                 <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
                         <FileText size={18} />
