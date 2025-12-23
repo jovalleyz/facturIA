@@ -6,6 +6,7 @@ import {
     Plus, Edit2, Trash2, RefreshCw, Check, X,
     FileText
 } from 'lucide-react';
+import ExportReportModal from './ExportReportModal';
 
 const Avatar = ({ name, url, size = "md", className = "" }) => {
     const [imageError, setImageError] = useState(false);
@@ -51,8 +52,10 @@ const SettingsView = ({
     onUpdateCompany,
     onSeedOVM,
     darkMode,
-    toggleDarkMode
+    toggleDarkMode,
+    invoices // Received from App
 }) => {
+    const [showExportModal, setShowExportModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [isEditing, setIsEditing] = useState(false);
     const [editName, setEditName] = useState(viewingContext?.name || '');
@@ -247,7 +250,7 @@ const SettingsView = ({
 
                 {/* Export Report */}
                 <button
-                    onClick={exportToCSV}
+                    onClick={() => setShowExportModal(true)}
                     className="w-full bg-white dark:bg-surface-dark p-4 rounded-2xl shadow-soft border border-gray-100 dark:border-gray-700 flex items-center gap-4 group hover:border-primary/30 transition-all duration-300"
                 >
                     <div className="w-12 h-12 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center text-green-600 dark:text-green-400 group-hover:scale-110 transition-transform">
@@ -393,6 +396,14 @@ const SettingsView = ({
                 </button>
 
             </main>
+
+            <ExportReportModal
+                isOpen={showExportModal}
+                onClose={() => setShowExportModal(false)}
+                invoices={invoices}
+                userProfile={viewingContext}
+                companyName={viewingContext?.name || "Usuario"}
+            />
         </div>
     );
 };

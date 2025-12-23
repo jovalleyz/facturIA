@@ -2419,6 +2419,7 @@ export default function App() {
           onSeedOVM={handleSeedOVM}
           darkMode={darkMode}
           toggleDarkMode={toggleDarkMode}
+          invoices={invoices}
         />}
       </main>
 
