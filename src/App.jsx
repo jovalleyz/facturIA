@@ -2310,7 +2310,11 @@ export default function App() {
       loading={loading}
     />
   );
-  if (currentView === 'welcome') return <WelcomeView onNavigate={setCurrentView} installPrompt={installPrompt} onInstall={handleInstallClick} />;
+  if (currentView === 'welcome') {
+    // Prevent flash of welcome screen while checking auth
+    if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><Loader2 size={40} className="text-[#4E73DF] animate-spin" /></div>;
+    return <WelcomeView onNavigate={setCurrentView} installPrompt={installPrompt} onInstall={handleInstallClick} />;
+  }
 
   // Safety check: If we are in a protected view but viewingContext is not ready, show loader
   if (!viewingContext && currentView !== 'login' && currentView !== 'register') {
