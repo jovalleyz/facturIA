@@ -48,6 +48,7 @@ export default async function handler(req, res) {
         const fechaEmision = getDataByLabel('Fecha de Emisión');
         const itbis = getDataByLabel('Total de ITBIS');
         const total = getDataByLabel('Monto Total');
+        const estado = getDataByLabel('Estado');
 
         // Manual mapping to app schema
         // App schema: 
@@ -77,7 +78,8 @@ export default async function handler(req, res) {
             itbis: parseAmount(itbis),
             propina: 0, // DGII page usually doesn't show legal tip in the summary, defaulting to 0
             categoria: 'Otros', // Default
-            source: 'dgii-ecf'
+            source: 'dgii-ecf',
+            estado: estado // 'Aceptado', etc.
         };
 
         if (!result.ncf || !result.total) {

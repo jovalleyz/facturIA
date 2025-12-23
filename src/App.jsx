@@ -400,6 +400,17 @@ const InvoiceDetailModal = ({ invoice, onClose, onEdit, onDelete }) => {
                   {invoice.categoria || 'Otros'}
                 </span>
               </div>
+              {invoice.estado && (
+                <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700/50">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-100/50 dark:bg-emerald-900/20 flex items-center justify-center text-emerald-600">
+                      <span className="material-icons-round text-base">verified</span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado DGII</span>
+                  </div>
+                  <span className="text-xs font-bold bg-emerald-100 text-emerald-700 px-3 py-1 rounded-full uppercase tracking-wider">{invoice.estado}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -1218,6 +1229,7 @@ export default function App() {
     setError('');
 
     // 1. TIER 1: QR CODE (e-CF)
+    let qrData = null;
     try {
       setLoadingMessage('Buscando código QR...');
       const qrUrl = await scanQRCode(originalFile);
@@ -1225,6 +1237,25 @@ export default function App() {
       if (qrUrl) {
         console.log("QR Found:", qrUrl);
         setLoadingMessage('Consultando DGII...');
+
+        // 1. Opt: Client-Side Parse (Fallback/Fast)
+        let fallbackData = null;
+        try {
+          const u = new URL(qrUrl);
+          const p = new URLSearchParams(u.search);
+          if (p.has('rncemisor')) {
+            const dayParams = p.get('fechaemision')?.split('-') || [];
+            fallbackData = {
+              rnc: p.get('rncemisor'),
+              ncf: p.get('encf')?.toUpperCase(),
+              fecha: dayParams.length === 3 ? `${dayParams[2]}-${dayParams[1]}-${dayParams[0]}` : null,
+              total: parseFloat(p.get('montototal')),
+              source: 'qr-url',
+              type
+            };
+          }
+        } catch (e) { console.log("URL parse failed", e); }
+
         const ecfResponse = await fetch('/api/ecf-lookup', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -1235,11 +1266,13 @@ export default function App() {
           const ecfData = await ecfResponse.json();
           // Merge with type info
           ecfData.type = type;
-
-          await handleSuccessProcessing(ecfData, base64Image);
-          return;
+          qrData = ecfData;
         } else {
-          console.warn("DGII Lookup failed, falling back to Vision...");
+          console.warn("DGII Lookup failed/timed out...");
+          if (fallbackData) {
+            console.log("Using URL fallback data");
+            qrData = fallbackData;
+          }
         }
       }
     } catch (qrError) {
@@ -1247,8 +1280,26 @@ export default function App() {
       // Continue to Tier 2
     }
 
+    // CHECKPOINT: If we have solid data with breakdown, stop here.
+    // If we have QR Data but MISSING Tax info, let's allow Fusion.
+    if (qrData) {
+      // Check if "Complete" (Has ITBIS or Propina or is a simple receipt)
+      // User requirement: "Lo que no viene a veces es el ITBIS... complementar con la factura completa".
+      // We'll trust if ITBIS is present.
+      const isComplete = (qrData.itbis && qrData.itbis > 0) || (qrData.propina && qrData.propina > 0);
+
+      if (isComplete) {
+        await handleSuccessProcessing(qrData, base64Image);
+        return;
+      }
+
+      console.log("QR Data found but incomplete (missing tax), continuing to Vision...");
+      setLoadingMessage('Completando datos con IA...');
+    } else {
+      setLoadingMessage('Analizando con IA...');
+    }
+
     // 2. TIER 2 & 3: VISION OCR + GEMINI (Backend)
-    setLoadingMessage('Analizando con IA...');
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -1256,13 +1307,44 @@ export default function App() {
         body: JSON.stringify({ image: base64Image, type }),
       });
 
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Error en el servidor');
+      const visionData = await response.json();
+      if (!response.ok) throw new Error(visionData.error || 'Error en el servidor');
 
-      await handleSuccessProcessing(data, base64Image);
+      // MERGE LOGIC (Hybrid Flow)
+      let finalData = visionData;
+
+      if (qrData) {
+        console.log("Merging QR + Vision Data");
+        finalData = {
+          ...visionData,
+          // Priority: QR Data (Official/Exact)
+          rnc: qrData.rnc || visionData.rnc,
+          ncf: qrData.ncf || visionData.ncf,
+          fecha: qrData.fecha || visionData.fecha,
+          total: qrData.total || visionData.total, // Trust QR total
+
+          // Priority: Vision Data (Detail) for missing fields
+          // Only use Vision ITBIS/Propina if QR didn't have them
+          itbis: (qrData.itbis > 0 ? qrData.itbis : visionData.itbis),
+          itbis18: (qrData.itbis > 0 ? qrData.itbis : visionData.itbis18), // Map simple itbis to 18 if generic
+          propina: (qrData.propina > 0 ? qrData.propina : visionData.propina),
+
+          // Metadata
+          estado: qrData.estado,
+          nombre_negocio: qrData.nombre_negocio || visionData.nombre_negocio
+        };
+      }
+
+      await handleSuccessProcessing(finalData, base64Image);
 
     } catch (err) {
-      console.error("Backend Analysis Error:", err);
+      console.error("Vision Tier Error:", err);
+      // If Vision fails but we had QR data, use QR data as fallback
+      if (qrData) {
+        console.log("Vision failed, falling back to basic QR data");
+        await handleSuccessProcessing(qrData, base64Image);
+        return;
+      }
       // setError(`Error al procesar: ${err.message}`);
     } finally {
       if (!duplicateWarning) {
@@ -2136,7 +2218,14 @@ export default function App() {
           </div>
         </div>
 
-        <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide mb-4 pl-1">Detalles de Factura</h3>
+        <div className="flex items-center justify-between mb-4 pl-1 pr-1">
+          <h3 className="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wide">Detalles de Factura</h3>
+          {formData.estado && (
+            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full uppercase flex items-center gap-1">
+              <span className="material-icons-round text-sm">verified</span> {formData.estado}
+            </span>
+          )}
+        </div>
 
         <div className="space-y-3">
           <datalist id="business-names">
