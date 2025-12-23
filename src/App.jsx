@@ -30,47 +30,10 @@ import {
   getDownloadURL
 } from "firebase/storage";
 import {
-  Camera,
-  Upload,
-  FileText,
-  Home,
-  PieChart,
-  Settings,
-  LogOut,
-  Check,
-  Users,
-  Loader2,
-  Download,
-  TrendingUp,
-  Search,
-  UserPlus,
-  ArrowRightLeft,
-  Briefcase,
-  User,
-  Edit2,
-  Calendar,
-  ChevronDown,
-  Infinity,
-  Save,
-  X as XIcon,
-  ImageIcon,
-  DollarSign,
-  BarChart2,
-  CreditCard,
-  ChevronRight,
-  AlertTriangle,
-  Eye,
-  Keyboard,
-  AlertCircle,
-  Trash2,
-  Shield,
-  Building2,
-  Phone,
-  MapPin,
-  ChevronLeft,
-  Hash, Store, LayoutGrid, ArrowLeft, HelpCircle, Layout, Info, UserCircle
+  Camera, Upload, FileText, Home, PieChart, Settings, LogOut, Check, Users, Loader2, Download, TrendingUp, Search, UserPlus, ArrowRightLeft, Briefcase, User, Edit2, Calendar, ChevronDown, Infinity, Save, X as XIcon, ImageIcon, DollarSign, BarChart2, CreditCard, ChevronRight, AlertTriangle, Eye, Keyboard, AlertCircle, Trash2, Shield, Building2, Phone, MapPin, ChevronLeft, Hash, Store, LayoutGrid, ArrowLeft, HelpCircle, Layout, Info, UserCircle, Share2, Sparkles, Filter, Plus
 } from 'lucide-react';
 
+import ScanningOverlay from './components/ScanningOverlay';
 import { scanQRCode } from './utils/qrScanner';
 import SettingsView from './components/SettingsView';
 import StatsView from './components/StatsView';
@@ -1232,7 +1195,12 @@ export default function App() {
     let qrData = null;
     try {
       setLoadingMessage('Buscando código QR...');
-      const qrUrl = await scanQRCode(originalFile);
+
+      // Wrap QR scan in a timeout to enforce fallback if it hangs
+      const qrPromise = scanQRCode(originalFile);
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 2000));
+
+      const qrUrl = await Promise.race([qrPromise, timeoutPromise]);
 
       if (qrUrl) {
         console.log("QR Found:", qrUrl);
@@ -2560,11 +2528,16 @@ export default function App() {
 
       {/* Global Loader Overlay */}
       {loading && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white animate-fade-in">
-          <Loader2 size={50} className="animate-spin mb-4 text-white" />
-          <p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage || 'Cargando...'}</p>
-        </div>
+        currentView === 'scan' ? (
+          <ScanningOverlay message={loadingMessage || 'Procesando...'} />
+        ) : (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center text-white animate-fade-in">
+            <Loader2 size={50} className="animate-spin mb-4 text-white" />
+            <p className="text-lg font-bold text-center px-4 drop-shadow-md">{loadingMessage || 'Cargando...'}</p>
+          </div>
+        )
       )}
     </div>
   );
 }
+
