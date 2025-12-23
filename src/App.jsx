@@ -517,83 +517,85 @@ const CompanyInfoModal = ({ companies, onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={e => e.stopPropagation()}>
-        {/* Header con gradiente */}
-        <div className="bg-gradient-to-r from-[#4E73DF] to-[#224abe] p-6 pb-8 relative overflow-hidden text-white">
-          {/* Fondo decorativo */}
-          <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12 pointer-events-none">
-            <Building2 size={100} />
-          </div>
-
-          <div className="relative z-10">
-            <h3 className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1 flex items-center gap-2">
-              <Shield size={14} /> Información de Empresa
-            </h3>
-            <h2 className="text-2xl font-bold leading-tight">{currentCompany.name}</h2>
-          </div>
-
-          <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all backdrop-blur-sm z-50">
-            <XIcon size={20} />
-          </button>
-        </div>
-
-        <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-20">
-          <div className="space-y-6">
-
-            {/* RNC Feature Row */}
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
-                <FileText size={24} />
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">RNC</p>
-                <p className="text-3xl font-bold text-gray-800 tracking-tight">{currentCompany.rnc}</p>
-              </div>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+        <div className="overflow-y-auto scrollbar-hide">
+          {/* Header con gradiente */}
+          <div className="bg-gradient-to-r from-[#4E73DF] to-[#224abe] p-6 pb-8 relative overflow-hidden text-white">
+            {/* Fondo decorativo */}
+            <div className="absolute top-[-20px] right-[-20px] opacity-10 rotate-12 pointer-events-none">
+              <Building2 size={100} />
             </div>
 
-            {/* Divider */}
-            <div className="w-full h-px bg-gray-100"></div>
+            <div className="relative z-10">
+              <h3 className="text-xs font-bold uppercase tracking-wider opacity-80 mb-1 flex items-center gap-2">
+                <Shield size={14} /> Información de Empresa
+              </h3>
+              <h2 className="text-2xl font-bold leading-tight">{currentCompany.name}</h2>
+            </div>
 
-            {/* Other Rows */}
-            <div className="space-y-5">
-              {currentCompany.phone && (
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
-                    <Phone size={22} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Teléfono</p>
-                    <p className="text-lg font-medium text-gray-800">{currentCompany.phone}</p>
-                  </div>
+            <button onClick={onClose} className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all backdrop-blur-sm z-50">
+              <XIcon size={20} />
+            </button>
+          </div>
+
+          <div className="p-6 -mt-4 bg-white rounded-t-2xl relative z-20">
+            <div className="space-y-6">
+
+              {/* RNC Feature Row */}
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 shadow-sm flex-shrink-0">
+                  <FileText size={24} />
                 </div>
-              )}
-              {currentCompany.address && (
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
-                    <MapPin size={22} />
-                  </div>
-                  <div>
-                    <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Dirección</p>
-                    <p className="text-sm font-medium text-gray-800 leading-snug">{currentCompany.address}</p>
-                  </div>
+                <div>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">RNC</p>
+                  <p className="text-3xl font-bold text-gray-800 tracking-tight">{currentCompany.rnc}</p>
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
 
-          {companies.length > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
-              <button onClick={prevCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
-                <ChevronLeft size={20} />
-              </button>
-              <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                {currentIndex + 1} / {companies.length}
-              </span>
-              <button onClick={nextCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
-                <ChevronRight size={20} />
-              </button>
+              {/* Divider */}
+              <div className="w-full h-px bg-gray-100"></div>
+
+              {/* Other Rows */}
+              <div className="space-y-5">
+                {currentCompany.phone && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                      <Phone size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Teléfono</p>
+                      <p className="text-lg font-medium text-gray-800">{currentCompany.phone}</p>
+                    </div>
+                  </div>
+                )}
+                {currentCompany.address && (
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 flex-shrink-0">
+                      <MapPin size={22} />
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Dirección</p>
+                      <p className="text-sm font-medium text-gray-800 leading-snug">{currentCompany.address}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+
+            {companies.length > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-100">
+                <button onClick={prevCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                  <ChevronLeft size={20} />
+                </button>
+                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                  {currentIndex + 1} / {companies.length}
+                </span>
+                <button onClick={nextCompany} className="p-2 hover:bg-gray-100 rounded-full text-gray-500 transition-colors">
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -632,7 +634,7 @@ export default function App() {
   const [deleteConfirmation, setDeleteConfirmation] = useState(null); // ID de la factura a eliminar
   const [companyToDelete, setCompanyToDelete] = useState(null); // ID de la empresa a eliminar
   const [installPrompt, setInstallPrompt] = useState(null);
-  const [infoNotification, setInfoNotification] = useState(null); // { type: 'success'|'error', title: string, message: string }
+  const [infoNotification, setInfoNotification] = useState(null); // {type: 'success'|'error', title: string, message: string }
   const [historyActiveTab, setHistoryActiveTab] = useState('expense');
   const [historySelectedDate, setHistorySelectedDate] = useState(new Date());
   const [historyViewMode, setHistoryViewMode] = useState('month'); // 'month' | 'all' // Lifted state for HistoryView tabs
